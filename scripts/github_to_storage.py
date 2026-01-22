@@ -1,26 +1,26 @@
 #!/usr/bin/env python3
 """
-GitHub 仓库文件批量导入对象存储脚本
+GitHub 仓库文件批量导入脚本
 
 功能：
 1. 通过 Git 克隆仓库（Git 自动处理认证）
-2. 从本地克隆的仓库批量导入文件到对象存储
+2. 从本地克隆的仓库批量导入文件到 assets 目录
 3. 支持批量导入和单个文件导入
 4. 支持指定目标目录，保持原有目录结构
-5. 支持清理临时克隆的仓库
+5. 可选择保留或清理克隆的仓库
 
 使用示例：
-    # 批量导入整个目录
+    # 批量导入整个目录到 assets
     python scripts/github_to_storage.py \
         --repo https://github.com/username/repo.git \
         --source-path docs/knowledge \
-        --target-prefix coze_knowledge_origin/test
+        --target-dir assets/knowledge
 
     # 导入单个文件
     python scripts/github_to_storage.py \
         --repo https://github.com/username/repo.git \
         --source-path docs/knowledge/example.pdf \
-        --target-prefix coze_knowledge_origin/test \
+        --target-dir assets/knowledge \
         --single-file
 """
 
@@ -36,79 +36,48 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from coze_coding_dev_sdk.s3 import S3SyncStorage
 
+class FileCopier:
+    """文件复制器"""
 
-class StorageUploader:
-    """对象存储上传器"""
-
-    def __init__(self):
-        """初始化对象存储客户端"""
-        self.storage = S3SyncStorage(
-            endpoint_url=os.getenv("COZE_BUCKET_ENDPOINT_URL"),
-            access_key="",
-            secret_key="",
-            bucket_name=os.getenv("COZE_BUCKET_NAME"),
-            region="cn-beijing",
-        )
-
-    def upload_from_local(self, local_path: str, target_key: str) -> bool:
+    def copy_from_local(self, local_path: str, target_path: str) -> bool:
         """
-        从本地文件上传到对象存储
+        从本地克隆目录复制文件到目标目录
 
         Args:
             local_path: 本地文件路径
-            target_key: 目标对象键（包含目录结构）
+            target_path: 目标文件路径（包含目录结构）
 
         Returns:
             是否成功
         """
         try:
-            print(f"  📤 上传中: {target_key}")
-            key = self.storage.stream_upload_file(
-                fileobj=open(local_path, 'rb'),
-                file_name=target_key,  # 使用完整的 target_key（包含目录路径）
-                content_type=self._get_content_type(local_path),
-                bucket=None,
-            )
-            print(f"  ✅ 上传成功: {key}")
+            print(f"  📤 复制中: {target_path}")
+
+            # 确保目标目录存在
+            target_dir = os.path.dirname(target_path)
+            if target_dir:
+                os.makedirs(target_dir, exist_ok=True)
+
+            # 复制文件
+            shutil.copy2(local_path, target_path)
+            print(f"  ✅ 复制成功: {target_path}")
             return True
         except Exception as e:
-            print(f"  ❌ 上传失败: {e}")
+            print(f"  ❌ 复制失败: {e}")
             return False
 
-    def _get_content_type(self, file_path: str) -> str:
-        """根据文件扩展名获取 Content-Type"""
-        ext = os.path.splitext(file_path)[1].lower()
-        content_types = {
-            '.pdf': 'application/pdf',
-            '.doc': 'application/msword',
-            '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-            '.txt': 'text/plain',
-            '.md': 'text/markdown',
-            '.html': 'text/html',
-            '.json': 'application/json',
-            '.jpg': 'image/jpeg',
-            '.jpeg': 'image/jpeg',
-            '.png': 'image/png',
-            '.gif': 'image/gif',
-        }
-        return content_types.get(ext, 'application/octet-stream')
-
-    def check_file_exists(self, key: str) -> bool:
+    def check_file_exists(self, target_path: str) -> bool:
         """
-        检查文件是否已存在
+        检查目标文件是否已存在
 
         Args:
-            key: 对象键
+            target_path: 目标文件路径
 
         Returns:
             是否存在
         """
-        try:
-            return self.storage.file_exists(file_key=key, bucket=None)
-        except Exception:
-            return False
+        return os.path.exists(target_path)
 
 
 def clone_repo(repo_url: str, branch: str = "main") -> str:
@@ -167,24 +136,24 @@ def get_all_files(directory: str) -> List[str]:
 def batch_upload(
     local_clone_dir: str,
     source_path: str,
-    target_prefix: str,
+    target_dir: str,
     skip_existing: bool = False
 ):
     """
-    批量上传目录
+    批量复制文件到目标目录
 
     Args:
         local_clone_dir: 本地克隆的仓库路径
         source_path: 源目录路径（相对于仓库根目录）
-        target_prefix: 目标前缀
+        target_dir: 目标目录路径
         skip_existing: 是否跳过已存在的文件
     """
-    print(f"\n🚀 开始批量上传")
+    print(f"\n🚀 开始批量复制")
     print(f"   源路径: {source_path}")
-    print(f"   目标前缀: {target_prefix}")
+    print(f"   目标目录: {target_dir}")
     print(f"   跳过已存在: {skip_existing}\n")
 
-    uploader = StorageUploader()
+    copier = FileCopier()
 
     # 构建完整的源目录路径
     full_source_path = os.path.join(local_clone_dir, source_path)
@@ -212,25 +181,25 @@ def batch_upload(
     skip_count = 0
     fail_count = 0
 
-    # 批量上传
+    # 批量复制
     for relative_file in relative_files:
         local_file_path = os.path.join(full_source_path, relative_file)
-        target_key = f"{target_prefix}/{relative_file}" if target_prefix else relative_file
+        target_path = os.path.join(target_dir, relative_file)
 
         # 检查是否跳过
-        if skip_existing and uploader.check_file_exists(target_key):
-            print(f"  ⏭️  跳过（已存在）: {target_key}")
+        if skip_existing and copier.check_file_exists(target_path):
+            print(f"  ⏭️  跳过（已存在）: {relative_file}")
             skip_count += 1
             continue
 
-        # 上传
-        if uploader.upload_from_local(local_file_path, target_key):
+        # 复制
+        if copier.copy_from_local(local_file_path, target_path):
             success_count += 1
         else:
             fail_count += 1
 
     # 汇总
-    print(f"\n📊 上传完成")
+    print(f"\n📊 复制完成")
     print(f"   成功: {success_count}")
     print(f"   跳过: {skip_count}")
     print(f"   失败: {fail_count}")
@@ -240,24 +209,24 @@ def batch_upload(
 def single_upload(
     local_clone_dir: str,
     source_path: str,
-    target_prefix: str,
+    target_dir: str,
     skip_existing: bool = False
 ):
     """
-    上传单个文件
+    复制单个文件
 
     Args:
         local_clone_dir: 本地克隆的仓库路径
         source_path: 源文件路径（相对于仓库根目录）
-        target_prefix: 目标前缀
+        target_dir: 目标目录路径
         skip_existing: 是否跳过已存在的文件
     """
-    print(f"\n🚀 开始上传单个文件")
+    print(f"\n🚀 开始复制单个文件")
     print(f"   源文件: {source_path}")
-    print(f"   目标前缀: {target_prefix}")
+    print(f"   目标目录: {target_dir}")
     print(f"   跳过已存在: {skip_existing}\n")
 
-    uploader = StorageUploader()
+    copier = FileCopier()
 
     # 构建完整的源文件路径
     full_source_path = os.path.join(local_clone_dir, source_path)
@@ -270,25 +239,25 @@ def single_upload(
         print(f"❌ 不是文件: {full_source_path}")
         return
 
-    # 构建目标键
+    # 构建目标路径
     filename = os.path.basename(source_path)
-    target_key = f"{target_prefix}/{filename}" if target_prefix else filename
+    target_path = os.path.join(target_dir, filename)
 
     # 检查是否跳过
-    if skip_existing and uploader.check_file_exists(target_key):
-        print(f"⏭️  文件已存在，跳过上传: {target_key}")
+    if skip_existing and copier.check_file_exists(target_path):
+        print(f"⏭️  文件已存在，跳过复制: {target_path}")
         return
 
-    # 上传
-    if uploader.upload_from_local(full_source_path, target_key):
-        print(f"\n✅ 上传成功: {target_key}")
+    # 复制
+    if copier.copy_from_local(full_source_path, target_path):
+        print(f"\n✅ 复制成功: {target_path}")
     else:
-        print(f"\n❌ 上传失败")
+        print(f"\n❌ 复制失败")
 
 
 def main():
     parser = argparse.ArgumentParser(
-        description="GitHub 仓库文件批量导入对象存储",
+        description="GitHub 仓库文件批量导入到 assets 目录",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 示例:
@@ -296,13 +265,13 @@ def main():
   python scripts/github_to_storage.py \\
       --repo https://github.com/zzh-zzh66/coze-agent-private-data.git \\
       --source-path 知识库资料001 \\
-      --target-prefix coze_knowledge_origin/test
+      --target-dir assets/knowledge
 
   # 导入单个文件
   python scripts/github_to_storage.py \\
       --repo https://github.com/zzh-zzh66/coze-agent-private-data.git \\
       --source-path 知识库资料001/example.pdf \\
-      --target-prefix coze_knowledge_origin/test \\
+      --target-dir assets/knowledge \\
       --single-file
         """
     )
@@ -318,9 +287,9 @@ def main():
         help="源文件或目录路径（相对于仓库根目录）"
     )
     parser.add_argument(
-        "--target-prefix",
+        "--target-dir",
         required=True,
-        help="对象存储目标前缀（目录），如: coze_knowledge_origin/test"
+        help="目标目录路径，如: assets/knowledge"
     )
     parser.add_argument(
         "--branch",
@@ -330,7 +299,7 @@ def main():
     parser.add_argument(
         "--single-file",
         action="store_true",
-        help="上传单个文件（默认为批量上传目录）"
+        help="复制单个文件（默认为批量复制目录）"
     )
     parser.add_argument(
         "--skip-existing",
@@ -340,13 +309,13 @@ def main():
     parser.add_argument(
         "--keep-temp",
         action="store_true",
-        help="保留临时克隆的仓库（默认上传完成后删除）"
+        help="保留临时克隆的仓库（默认复制完成后删除）"
     )
 
     args = parser.parse_args()
 
-    # 确保目标前缀不以 / 开头或结尾
-    target_prefix = args.target_prefix.strip("/")
+    # 确保目标目录路径
+    target_dir = args.target_dir.rstrip("/")
     source_path = args.source_path.strip("/")
 
     # 克隆仓库
@@ -356,20 +325,20 @@ def main():
         print(f"❌ 克隆仓库失败: {e}")
         sys.exit(1)
 
-    # 执行上传
+    # 执行复制
     try:
         if args.single_file:
             single_upload(
                 local_clone_dir=local_clone_dir,
                 source_path=source_path,
-                target_prefix=target_prefix,
+                target_dir=target_dir,
                 skip_existing=args.skip_existing
             )
         else:
             batch_upload(
                 local_clone_dir=local_clone_dir,
                 source_path=source_path,
-                target_prefix=target_prefix,
+                target_dir=target_dir,
                 skip_existing=args.skip_existing
             )
     finally:
