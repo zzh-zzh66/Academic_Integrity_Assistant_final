@@ -23,15 +23,16 @@ import json
 from typing import List, Dict, Set
 from pathlib import Path
 
-# 添加项目根目录到 Python 路径
+# 添加项目根目录和 src 目录到 Python 路径
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
+sys.path.insert(0, str(project_root / "src"))
 
 from coze_coding_dev_sdk import KnowledgeClient, Config
 from coze_coding_dev_sdk.knowledge import KnowledgeDocument, DataSourceType
 
 # 文件读取工具
-from utils.file.file import FileOps
+from utils.file.file import FileOps, File
 
 
 class AssetsToKnowledgeImporter:
@@ -111,7 +112,12 @@ class AssetsToKnowledgeImporter:
             文件内容文本
         """
         try:
-            content = FileOps.extract_text(file_path)
+            # 创建 File 对象
+            file_obj = File(
+                url=file_path,  # 使用本地路径作为 URL
+                file_type="document"  # 标记为文档类型
+            )
+            content = FileOps.extract_text(file_obj)
             return content
         except Exception as e:
             print(f"  ⚠️  读取文件失败: {e}")
