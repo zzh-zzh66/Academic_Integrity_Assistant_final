@@ -3,22 +3,24 @@
 GitHub 仓库文件批量导入对象存储脚本
 
 功能：
-1. 从公开 GitHub 仓库批量导入文件到对象存储
+1. 从 GitHub 仓库（公开或私有）批量导入文件到对象存储
 2. 支持批量导入和单个文件导入
 3. 支持指定目标目录，保持原有目录结构
+4. 支持私有仓库的 GitHub Token 认证
 
 使用示例：
-    # 批量导入整个目录
+    # 批量导入整个目录（公开仓库）
     python scripts/github_to_storage.py \
         --repo username/repo \
         --source-path docs/knowledge \
         --target-prefix coze_knowledge_origin/test
 
-    # 导入单个文件
+    # 导入单个文件（私有仓库）
     python scripts/github_to_storage.py \
         --repo username/repo \
         --source-path docs/knowledge/example.pdf \
         --target-prefix coze_knowledge_origin/test \
+        --token ghp_xxxxxxxxxxxx \
         --single-file
 """
 
@@ -41,16 +43,23 @@ class GitHubRepoFetcher:
     GITHUB_API_BASE = "https://api.github.com"
     GITHUB_RAW_BASE = "https://raw.githubusercontent.com"
 
-    def __init__(self, repo: str, branch: str = "main"):
+    def __init__(self, repo: str, branch: str = "main", token: Optional[str] = None):
         """
         初始化 GitHub 仓库获取器
 
         Args:
             repo: 仓库格式 username/repo_name
             branch: 分支名，默认 main
+            token: GitHub Personal Access Token（私有仓库需要）
         """
         self.repo = repo
         self.branch = branch
+        self.token = token
+
+        # 构建请求头
+        self.headers = {}
+        if self.token:
+            self.headers["Authorization"] = f"token {self.token}"
 
     def get_directory_contents(self, path: str = "") -> List[Dict]:
         """
@@ -70,7 +79,7 @@ class GitHubRepoFetcher:
 
         try:
             import requests
-            response = requests.get(url, timeout=30)
+            response = requests.get(url, timeout=30, headers=self.headers)
             response.raise_for_status()
             contents = response.json()
 
@@ -103,24 +112,33 @@ class GitHubRepoFetcher:
 
         try:
             import requests
-            response = requests.get(url, timeout=30)
+            response = requests.get(url, timeout=30, headers=self.headers)
             response.raise_for_status()
             return response.json()
         except Exception as e:
             print(f"❌ 获取文件信息失败: {e}")
             return None
 
-    def get_raw_url(self, path: str) -> str:
+    def get_download_url(self, path: str) -> str:
         """
-        获取文件的原始下载 URL
+        获取文件的下载 URL
 
         Args:
             path: 文件路径
 
         Returns:
-            原始文件 URL
+            下载 URL（私有仓库使用 API 下载链接）
         """
-        return f"{self.GITHUB_RAW_BASE}/{self.repo}/{self.branch}/{path}"
+        if self.token:
+            # 私有仓库使用 API 的 download_url
+            url = f"{self.GITHUB_API_BASE}/repos/{self.repo}/contents/{path}?ref={self.branch}"
+            import requests
+            response = requests.get(url, timeout=30, headers=self.headers)
+            response.raise_for_status()
+            return response.json().get("download_url", "")
+        else:
+            # 公开仓库使用 raw.githubusercontent.com
+            return f"{self.GITHUB_RAW_BASE}/{self.repo}/{self.branch}/{path}"
 
 
 class StorageUploader:
@@ -177,6 +195,7 @@ def batch_upload(
     source_path: str,
     target_prefix: str,
     branch: str = "main",
+    token: Optional[str] = None,
     skip_existing: bool = False
 ):
     """
@@ -187,6 +206,7 @@ def batch_upload(
         source_path: 源目录路径
         target_prefix: 目标前缀
         branch: 分支名
+        token: GitHub Token（私有仓库需要）
         skip_existing: 是否跳过已存在的文件
     """
     print(f"\n🚀 开始批量上传")
@@ -194,9 +214,10 @@ def batch_upload(
     print(f"   源路径: {source_path}")
     print(f"   目标前缀: {target_prefix}")
     print(f"   分支: {branch}")
+    print(f"   使用Token: {'是' if token else '否'}")
     print(f"   跳过已存在: {skip_existing}\n")
 
-    fetcher = GitHubRepoFetcher(repo, branch)
+    fetcher = GitHubRepoFetcher(repo, branch, token)
     uploader = StorageUploader()
 
     # 获取目录内容
@@ -227,11 +248,11 @@ def batch_upload(
             skip_count += 1
             continue
 
-        # 获取原始 URL
-        raw_url = fetcher.get_raw_url(source_file_path)
+        # 获取下载 URL
+        download_url = fetcher.get_download_url(source_file_path)
 
         # 上传
-        if uploader.upload_from_github(raw_url, target_key):
+        if uploader.upload_from_github(download_url, target_key):
             success_count += 1
         else:
             fail_count += 1
@@ -249,6 +270,7 @@ def single_upload(
     source_path: str,
     target_prefix: str,
     branch: str = "main",
+    token: Optional[str] = None,
     skip_existing: bool = False
 ):
     """
@@ -259,6 +281,7 @@ def single_upload(
         source_path: 源文件路径
         target_prefix: 目标前缀
         branch: 分支名
+        token: GitHub Token（私有仓库需要）
         skip_existing: 是否跳过已存在的文件
     """
     print(f"\n🚀 开始上传单个文件")
@@ -266,9 +289,10 @@ def single_upload(
     print(f"   源文件: {source_path}")
     print(f"   目标前缀: {target_prefix}")
     print(f"   分支: {branch}")
+    print(f"   使用Token: {'是' if token else '否'}")
     print(f"   跳过已存在: {skip_existing}\n")
 
-    fetcher = GitHubRepoFetcher(repo, branch)
+    fetcher = GitHubRepoFetcher(repo, branch, token)
     uploader = StorageUploader()
 
     # 获取文件信息
@@ -288,11 +312,11 @@ def single_upload(
         print(f"⏭️  文件已存在，跳过上传: {target_key}")
         return
 
-    # 获取原始 URL
-    raw_url = fetcher.get_raw_url(source_path)
+    # 获取下载 URL
+    download_url = fetcher.get_download_url(source_path)
 
     # 上传
-    if uploader.upload_from_github(raw_url, target_key):
+    if uploader.upload_from_github(download_url, target_key):
         print(f"\n✅ 上传成功: {target_key}")
     else:
         print(f"\n❌ 上传失败")
@@ -349,6 +373,10 @@ def main():
         action="store_true",
         help="跳过已存在的文件"
     )
+    parser.add_argument(
+        "--token",
+        help="GitHub Personal Access Token（私有仓库需要）"
+    )
 
     args = parser.parse_args()
 
@@ -363,6 +391,7 @@ def main():
             source_path=source_path,
             target_prefix=target_prefix,
             branch=args.branch,
+            token=args.token,
             skip_existing=args.skip_existing
         )
     else:
@@ -371,6 +400,7 @@ def main():
             source_path=source_path,
             target_prefix=target_prefix,
             branch=args.branch,
+            token=args.token,
             skip_existing=args.skip_existing
         )
 
