@@ -42,7 +42,7 @@ class AssetsToKnowledgeImporter:
     SUPPORTED_EXTENSIONS = {
         '.txt', '.md', '.markdown',  # 文本文件
         '.pdf',  # PDF 文件
-        '.doc', '.docx',  # Word 文档
+        '.docx',  # Word 文档（仅支持 .docx，不支持旧版 .doc）
     }
 
     def __init__(self):
@@ -109,7 +109,7 @@ class AssetsToKnowledgeImporter:
             file_path: 文件路径
 
         Returns:
-            文件内容文本
+            文件内容文本，如果读取失败返回 None
         """
         try:
             # 创建 File 对象
@@ -118,10 +118,22 @@ class AssetsToKnowledgeImporter:
                 file_type="document"  # 标记为文档类型
             )
             content = FileOps.extract_text(file_obj)
+
+            # 检查内容是否有效
+            if not content or len(content) < 10:
+                print(f"  ⚠️  文件内容过短: {len(content) if content else 0} 字符")
+                return None
+
+            # 检查是否包含错误信息
+            error_markers = ['[解析失败]', '[FileOps Error]', 'File is not a zip file']
+            if any(marker in content for marker in error_markers):
+                print(f"  ⚠️  文件包含错误信息: {content[:100]}")
+                return None
+
             return content
         except Exception as e:
             print(f"  ⚠️  读取文件失败: {e}")
-            return ""
+            return None
 
     def list_files(self, assets_dir: str) -> List[str]:
         """
@@ -140,6 +152,7 @@ class AssetsToKnowledgeImporter:
             return []
 
         files = []
+        skipped_doc_files = []
         assets_path = Path(assets_dir)
 
         # 递归遍历目录
@@ -148,8 +161,23 @@ class AssetsToKnowledgeImporter:
                 ext = file_path.suffix.lower()
                 if ext in self.SUPPORTED_EXTENSIONS:
                     files.append(str(file_path))
+                elif ext == '.doc':
+                    # 跳过旧版 .doc 文件
+                    skipped_doc_files.append(str(file_path))
 
-        print(f"✅ 找到 {len(files)} 个文件\n")
+        print(f"✅ 找到 {len(files)} 个文件")
+
+        if skipped_doc_files:
+            print(f"⚠️  跳过 {len(skipped_doc_files)} 个 .doc 文件（仅支持 .docx 格式）")
+            if len(skipped_doc_files) <= 5:
+                for f in skipped_doc_files:
+                    print(f"     - {os.path.basename(f)}")
+            else:
+                for f in skipped_doc_files[:3]:
+                    print(f"     - {os.path.basename(f)}")
+                print(f"     ... 还有 {len(skipped_doc_files) - 3} 个文件")
+
+        print()
         return files
 
     def import_to_knowledge(
@@ -206,15 +234,19 @@ class AssetsToKnowledgeImporter:
                 print("  ℹ️  没有需要导入的文件")
                 continue
 
-            # 构建文档列表
+            # 构建文档列表（只包含成功读取的文件）
             documents = []
+            successful_files = []  # 记录成功读取的文件
+            failed_files = []      # 记录读取失败的文件
+
             for file_path, file_key in files_to_import:
                 # 读取文件内容
                 print(f"  📖 读取文件: {file_key}")
                 content = self._read_file_content(file_path)
 
-                if not content:
-                    print(f"  ⚠️  文件内容为空: {file_key}")
+                if content is None:
+                    print(f"  ⚠️  文件读取失败或无效: {file_key}")
+                    failed_files.append(file_key)
                     fail_count += 1
                     continue
 
@@ -223,36 +255,56 @@ class AssetsToKnowledgeImporter:
                     source=DataSourceType.TEXT,  # 使用文本类型
                     raw_data=content  # 直接传入文本内容
                 ))
+                successful_files.append(file_key)
+                print(f"  ✅ 文件读取成功: {file_key} (长度: {len(content)} 字符)")
 
             if not documents:
+                print(f"  ℹ️  该数据集没有有效文件可导入")
+                print(f"     失败文件数: {len(failed_files)}")
                 continue
 
-            # 导入到知识库
-            try:
-                print(f"  📤 正在导入 {len(documents)} 个文件...")
-                response = self.knowledge_client.add_documents(
-                    documents=documents,
-                    table_name=dataset_name
-                )
+            # 分批导入（每批最多 50 个文件）
+            batch_size = 50
+            total_batches = (len(documents) + batch_size - 1) // batch_size
 
-                if response.code == 0:
-                    print(f"  ✅ 导入成功: {len(response.doc_ids)} 个文件")
-                    success_count += len(documents)
+            for batch_idx in range(0, len(documents), batch_size):
+                batch_docs = documents[batch_idx:batch_idx + batch_size]
+                batch_files = successful_files[batch_idx:batch_idx + batch_size]
+                batch_num = (batch_idx // batch_size) + 1
 
-                    # 更新导入记录
-                    if dataset_name not in self.imported_files:
-                        self.imported_files[dataset_name] = set()
-                    for _, file_key in files_to_import:
-                        self.imported_files[dataset_name].add(file_key)
-                else:
-                    print(f"  ❌ 导入失败: {response.msg}")
-                    fail_count += len(documents)
+                # 导入到知识库
+                try:
+                    print(f"  📤 正在导入第 {batch_num}/{total_batches} 批 ({len(batch_docs)} 个文件)...")
+                    response = self.knowledge_client.add_documents(
+                        documents=batch_docs,
+                        table_name=dataset_name
+                    )
 
-            except Exception as e:
-                print(f"  ❌ 导入异常: {e}")
-                import traceback
-                traceback.print_exc()
-                fail_count += len(documents)
+                    if response.code == 0:
+                        print(f"  ✅ 批次 {batch_num} 导入成功: {len(response.doc_ids)} 个文件")
+                        success_count += len(response.doc_ids)
+
+                        # 更新导入记录
+                        if dataset_name not in self.imported_files:
+                            self.imported_files[dataset_name] = set()
+                        self.imported_files[dataset_name].update(batch_files)
+                    else:
+                        print(f"  ❌ 批次 {batch_num} 导入失败: {response.msg}")
+                        fail_count += len(batch_docs)
+
+                except Exception as e:
+                    print(f"  ❌ 批次 {batch_num} 导入异常: {e}")
+                    import traceback
+                    traceback.print_exc()
+                    fail_count += len(batch_docs)
+
+            # 显示失败文件列表
+            if failed_files:
+                print(f"  ⚠️  读取失败的文件 ({len(failed_files)} 个):")
+                for f in failed_files[:5]:  # 只显示前 5 个
+                    print(f"     - {f}")
+                if len(failed_files) > 5:
+                    print(f"     ... 还有 {len(failed_files) - 5} 个文件")
 
         # 保存导入记录
         self._save_import_record()
