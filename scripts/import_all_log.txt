@@ -1,0 +1,1987 @@
+============================================================
+🚀 开始导入所有文件到知识库
+============================================================
+   目录: assets/knowledge
+   批次大小: 50
+============================================================
+
+🔍 扫描文件...
+✅ 找到 436 个有效文件
+⚠️  跳过 44 个 .doc 文件
+
+📋 分组为 46 个数据集
+
+📁 [1/46] 数据集: 案例
+   文件数: 51
+   ✅ 成功读取 51 个文件
+╭──────────────────────────────── HTTP Request ────────────────────────────────╮
+│ POST https://integration.coze.cn/v1/knowledge_base/batch_import              │
+│                                                                              │
+│ Headers:                                                                     │
+│   x-tt-env: ppe_coze_knowledge                                               │
+│   x-use-ppe: 1                                                               │
+│   x-coze-token: Bearer                                                       │
+│ M2JnN01PN0FZNzN1a05TZGR4TzVXTDBUQTZ6MlUyZ3k6UEJWNXVhRVlwM09SeTZsRWkyd29aZVNV │
+│ T0dmU2ZCWEFZdG1xNlV4bWcxU2VYdUZWR2xMSnU3dndCVllYY1ljZQ==                     │
+│   Content-Type: application/json                                             │
+│   Authorization: Bearer M2JnN01P...ZQ==                                      │
+│   X-Client-Sdk: coze-coding-dev-sdk-python/0.5.0                             │
+│                                                                              │
+│ Body:                                                                        │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+{                                                                               
+  "dataset": "案例",                                                            
+  "data": [                                                                     
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "国际科研合作信息⽹\n当前位置  -> ⾸⻚-> 科研诚信-> 防治科研不
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "行政处罚决定书（苏州药明康德）\n发布时间：2018-10-25   浏览：
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "国际科研合作信息⽹\n当前位置  -> ⾸⻚-> 科研诚信-> 防治科研不
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "国际科研合作信息⽹\n当前位置  -> ⾸⻚-> 科研诚信-> 防治科研不
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "国际科研合作信息⽹\n当前位置  -> ⾸⻚-> 科研诚信-> 防治科研不
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "国际科研合作信息⽹\n当前位置  -> ⾸⻚-> 科研诚信-> 防治科研不
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "国际科研合作信息⽹\n当前位置  -> ⾸⻚-> 科研诚信-> 防治科研不
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "国际科研合作信息⽹\n当前位置  -> ⾸⻚-> 科研诚信-> 防治科研不
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "国际科研合作信息⽹\n当前位置  -> ⾸⻚-> 科研诚信-> 防治科研不
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "[[ 字体还原 ][ 字体放⼤ ]通知通告 > ⾏政许可\n⾏政处罚决定书 
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "国际科研合作信息⽹\n当前位置  -> ⾸⻚-> 科研诚信-> 防治科研不
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "统计显示近20年64起学术不端问题被曝光\n发布时间：2019-06-19   
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "国际科研合作信息⽹\n当前位置  -> ⾸⻚-> 科研诚信-> 防治科研不
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "国际科研合作信息⽹\n当前位置  -> ⾸⻚-> 科研诚信-> 防治科研不
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "国际科研合作信息⽹\n当前位置  -> ⾸⻚-> 科研诚信-> 防治科研不
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "行政处罚决定书（华大科技）\n发布时间：2018-10-25   浏览：113 
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "行政处罚决定书（华山医院）\n发布时间：2018-10-25   浏览：53  
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "⽣命科学 | 医学科学 | 化学科学 | ⼯程材料 | 信息科学 | 地球科
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "河北科技大学调查结果称韩春雨团队不存在主观造假\n发布时间：201
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "国际科研合作信息⽹\n当前位置  -> ⾸⻚-> 科研诚信-> 防治科研不
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "国际科研合作信息⽹\n当前位置  -> ⾸⻚-> 科研诚信-> 防治科研不
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "国际科研合作信息⽹\n当前位置  -> ⾸⻚-> 科研诚信-> 防治科研不
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "国际科研合作信息⽹\n当前位置  -> ⾸⻚-> 科研诚信-> 防治科研不
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "国际科研合作信息⽹\n当前位置  -> ⾸⻚-> 科研诚信-> 防治科研不
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "国际科研合作信息⽹\n当前位置  -> ⾸⻚-> 科研诚信-> 防治科研不
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "[[ 字体还原 ][ 字体放⼤ ]通知通告 > ⾏政许可\n⾏政处罚决定书 
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "⾸⻚ 组织机构 信息公开 科技政策\n政务服务 党建⼯作 公众参与  
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "国际科研合作信息⽹\n当前位置  -> ⾸⻚-> 科研诚信-> 防治科研不
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "行政处罚决定书（厦门艾德）\n发布时间：2018-10-25   浏览：44  
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "行政处罚决定书（阿斯利康）\n发布时间：2018-10-25   浏览：51  
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "国际科研合作信息⽹\n当前位置  -> ⾸⻚-> 科研诚信-> 防治科研不
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "国际科研合作信息⽹\n当前位置  -> ⾸⻚-> 科研诚信-> 防治科研不
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "国际科研合作信息⽹\n当前位置  -> ⾸⻚-> 科研诚信-> 防治科研不
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "国际科研合作信息⽹\n当前位置  -> ⾸⻚-> 科研诚信-> 防治科研不
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "国际科研合作信息⽹\n当前位置  -> ⾸⻚-> 科研诚信-> 防治科研不
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "国际科研合作信息⽹\n当前位置  -> ⾸⻚-> 科研诚信-> 防治科研不
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "国际科研合作信息⽹\n当前位置  -> ⾸⻚-> 科研诚信-> 防治科研不
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "⾸⻚ 组织机构 信息公开 科技政策\n政务服务 党建⼯作 公众参与  
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "国际科研合作信息⽹\n当前位置  -> ⾸⻚-> 科研诚信-> 防治科研不
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "国际科研合作信息⽹\n当前位置  -> ⾸⻚-> 科研诚信-> 防治科研不
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "关于撤销“西南边疆历史与现状综合研究项目”子课题“广西石刻总集整
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "中国农业大学教授李宁及同案被告人张磊贪污案一审宣判\n发布时间 
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "国际科研合作信息⽹\n当前位置  -> ⾸⻚-> 科研诚信-> 防治科研不
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "\n\n\n\n\n\n\n\n\n\n\n\n"                                    
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "国际科研合作信息⽹\n当前位置  -> ⾸⻚-> 科研诚信-> 防治科研不
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "国际科研合作信息⽹\n当前位置  -> ⾸⻚-> 科研诚信-> 防治科研不
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "行政处罚决定书（昆皓睿诚）\n发布时间：2018-10-25   浏览：181 
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "国际科研合作信息⽹\n当前位置  -> ⾸⻚-> 科研诚信-> 防治科研不
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "国际科研合作信息⽹\n当前位置  -> ⾸⻚-> 科研诚信-> 防治科研不
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "国际科研合作信息⽹\n当前位置  -> ⾸⻚-> 科研诚信-> 防治科研不
+    }                                                                           
+  ]                                                                             
+}                                                                               
+
+╭─────────────────────────────── HTTP Response ────────────────────────────────╮
+│ Status: 200 OK                                                               │
+│                                                                              │
+│ Response Headers:                                                            │
+│   Server: Tengine                                                            │
+│   Content-Type: application/json                                             │
+│   Content-Length: 64                                                         │
+│   Connection: keep-alive                                                     │
+│   Date: Thu, 22 Jan 2026 18:12:13 GMT                                        │
+│   Server-Timing: inner; dur=424,tt_agw; dur=65,                              │
+│ cdn-cache;desc=MISS,edge;dur=18,origin;dur=696                               │
+│   X-Envoy-Response-Flags: -                                                  │
+│   X-Tt-Logid: 20260123021213A46B42CBBE22D4D1336F                             │
+│   Strict-Transport-Security: max-age=31536000; includeSubDomains             │
+│   x-tt-trace-host:                                                           │
+│ 01e8ceb24e79a5140a1988c644decd1ef943c73fa3dfa54886a9248904059a13f3ba0b99b370 │
+│ b4d01aededbc4bf423e298cf98fa1157ab7147c9609faf4ed07e5ba0fe4ccf31f451d09dc804 │
+│ 57433264f94e3905ec1715df7a85a619d0d86e1200                                   │
+│   x-tt-trace-tag: id=03;cdn-cache=miss;type=dyn                              │
+│   x-tt-trace-id: 00-260123021213A46B42CBBE22D4D1336F-20D5484D898B7280-00     │
+│   X-TT-TIMESTAMP: 1769105533.847                                             │
+│   Via: cache76.l2nu20-17[696,0], ens-cache19.cn8000[714,0]                   │
+│   Timing-Allow-Origin: *                                                     │
+│   EagleId: dcb5a52717691055331491033e                                        │
+│                                                                              │
+│ Body:                                                                        │
+╰──────────────────────────────────────────────────────────────────────────────╯
+{                                                                               
+  "code": 250000009,                                                            
+  "msg": "[Coze Knowledge] fetching data failed"                                
+}                                                                               
+
+   [1/2] ❌ 导入失败: [Coze Knowledge] fetching data failed
+╭──────────────────────────────── HTTP Request ────────────────────────────────╮
+│ POST https://integration.coze.cn/v1/knowledge_base/batch_import              │
+│                                                                              │
+│ Headers:                                                                     │
+│   x-tt-env: ppe_coze_knowledge                                               │
+│   x-use-ppe: 1                                                               │
+│   x-coze-token: Bearer                                                       │
+│ M2JnN01PN0FZNzN1a05TZGR4TzVXTDBUQTZ6MlUyZ3k6UEJWNXVhRVlwM09SeTZsRWkyd29aZVNV │
+│ T0dmU2ZCWEFZdG1xNlV4bWcxU2VYdUZWR2xMSnU3dndCVllYY1ljZQ==                     │
+│   Content-Type: application/json                                             │
+│   Authorization: Bearer M2JnN01P...ZQ==                                      │
+│   X-Client-Sdk: coze-coding-dev-sdk-python/0.5.0                             │
+│                                                                              │
+│ Body:                                                                        │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+{                                                                               
+  "dataset": "案例",                                                            
+  "data": [                                                                     
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "国际科研合作信息⽹\n当前位置  -> ⾸⻚-> 科研诚信-> 防治科研不
+    }                                                                           
+  ]                                                                             
+}                                                                               
+
+╭─────────────────────────────── HTTP Response ────────────────────────────────╮
+│ Status: 200 OK                                                               │
+│                                                                              │
+│ Response Headers:                                                            │
+│   Server: Tengine                                                            │
+│   Content-Type: application/json                                             │
+│   Content-Length: 64                                                         │
+│   Connection: keep-alive                                                     │
+│   Date: Thu, 22 Jan 2026 18:12:14 GMT                                        │
+│   Server-Timing: inner; dur=51,tt_agw; dur=13,                               │
+│ cdn-cache;desc=MISS,edge;dur=28,origin;dur=103                               │
+│   X-Envoy-Response-Flags: -                                                  │
+│   X-Tt-Logid: 20260123021214BB7010FEE62C09B727FA                             │
+│   Strict-Transport-Security: max-age=31536000; includeSubDomains             │
+│   x-tt-trace-host:                                                           │
+│ 01047e6dcdbde7abbb1d6e10d3c575d75f7fb03e169eeaf9095c13d0db62d17ff5b0e7079c53 │
+│ cb87f600cf4c2759f03eb15abec296dc400ea1d1924d1ab5225d963da6ff75116110316ade93 │
+│ 8436aa3503b304d51abb07d5d3da1befb24806aec6                                   │
+│   x-tt-trace-tag: id=03;cdn-cache=miss;type=dyn                              │
+│   x-tt-trace-id: 00-260123021214BB7010FEE62C09B727FA-7B98602785535FD7-00     │
+│   X-TT-TIMESTAMP: 1769105534.109                                             │
+│   Via: cache31.l2cn3031[103,0], ens-cache5.cn8000[131,0]                     │
+│   Timing-Allow-Origin: *                                                     │
+│   EagleId: dcb5a51917691055339987654e                                        │
+│                                                                              │
+│ Body:                                                                        │
+╰──────────────────────────────────────────────────────────────────────────────╯
+{                                                                               
+  "code": 250000009,                                                            
+  "msg": "[Coze Knowledge] fetching data failed"                                
+}                                                                               
+
+   [2/2] ❌ 导入失败: [Coze Knowledge] fetching data failed
+
+📁 [2/46] 数据集: 政策文件_行业标准
+   文件数: 35
+Ignoring wrong pointing object 0 0 (offset 0)
+   ✅ 成功读取 35 个文件
+╭──────────────────────────────── HTTP Request ────────────────────────────────╮
+│ POST https://integration.coze.cn/v1/knowledge_base/batch_import              │
+│                                                                              │
+│ Headers:                                                                     │
+│   x-tt-env: ppe_coze_knowledge                                               │
+│   x-use-ppe: 1                                                               │
+│   x-coze-token: Bearer                                                       │
+│ M2JnN01PN0FZNzN1a05TZGR4TzVXTDBUQTZ6MlUyZ3k6UEJWNXVhRVlwM09SeTZsRWkyd29aZVNV │
+│ T0dmU2ZCWEFZdG1xNlV4bWcxU2VYdUZWR2xMSnU3dndCVllYY1ljZQ==                     │
+│   Content-Type: application/json                                             │
+│   Authorization: Bearer M2JnN01P...ZQ==                                      │
+│   X-Client-Sdk: coze-coding-dev-sdk-python/0.5.0                             │
+│                                                                              │
+│ Body:                                                                        │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+{                                                                               
+  "dataset": "政策文件_行业标准",                                               
+  "data": [                                                                     
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "   \n \n \n \n \n \n \n \nICS 01.140.40 \nA 19 \n备案号： \n 
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "主题分类词表描述规范\n中华人民共和国新闻出版行业标准\nSpecifi
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"    
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "   \n \nICS 01.140.20 \nA14 \n中华人民共和国新闻出版行业标准 
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": " \n \n \n \n \n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "中国科学技术协会关于印发《科技工作者科学道德规范（试行）》的 
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": " \n\n\n \n\n \n\n \n\n \n\n \n\n \n\n \n\n \n\n \n\n \n\n \n\
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "ICMJE 推荐规范  ICMJE Recommendations Updated December 2017 \
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "   \n \nICS 01.140.40 \nA19 \n中华人民共和国新闻出版行业标准 
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "ICS 01.140.40 \nA 19 \n      \nCY \n中华人民共和国 新闻出版  
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": " \n \n \n \n \n \n \n \n \n \n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "ICS 01.140.40 \nA 19 \n      \nCY \n中华人民共和国 新闻出版  
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "中国计算机学会学术道德规范 \n总 则 \n第一条 为崇尚科学精神， 
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": " \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n\n2 \n .........
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "ICS 01.140.40\nA 19\nCY\n中 华 人 民 共 和 国 新 闻 出 版 行 
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "   \n \nICS 01.140.40 \nA19 \n \n中华人民共和国新闻出版行 业 
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "⾸⻚ 组织机构 信息公开 科技政策\n政务服务 党建⼯作 公众参与  
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "信息名称：教育部\n信息索引：\u0000\u0000\u0000A\u0000\n发⽂字
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "   \n \n ICS 01.140.40 \nA19 \n中华人民共和国新闻出版行业标准
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "\u0000\u0017\u0000\u0000\u0000\u0017\u0000\u0017\u0000\u0017\
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "ICS 01.140.40\nA 19\nCY\n中 华 人 民 共 和 国 新 闻 出 版 行 
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "   \n \nICS 01.140.40 \nA19 \n \n中华人民共和国新闻出版行业标
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "使用边界指南2.0\nGuideline on the Boundaries of\nAIGC Usage i
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "信息名称：教育部\n信息索引：\u0000\u0000\u0000A\u0000\n发⽂字
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": " \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n通用指南与最佳实
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "中文图书标识规则\n2009-09-23发布 2010-01-01实施\n备案号：\nIC
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "ICS\n35．240．20 L\n76 a雪\n中华人民共和国国家标准\nGB／T\n26
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "   \n \n-ICS 01.140.40 \nA19 \n中华人民共和国新闻出版行业标准
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "   \n \nICS 01.140.20 \nA14 \n \n中华人民共和国新闻出版行业标
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "ICS 01.140.40\nA 19\nCY\n中 华 人 民 共 和 国 新 闻 出 版 行 
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "ICS 01.140.40\nA 19\nCY\n中 华 人 民 共 和 国 新 闻 出 版 行 
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": " \n \n  \n       \n © 2014 John Wiley & Sons, Ltd.\nCC BY-NC 
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "科研诚信规范手册\n国家自然科学基金《科研诚信规范手册》编写组\
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "ICS 01.140.40\nA 19\nCY\n中 华 人 民 共 和 国 新 闻 出 版 行 
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"        
+    }                                                                           
+  ]                                                                             
+}                                                                               
+
+╭─────────────────────────────── HTTP Response ────────────────────────────────╮
+│ Status: 200 OK                                                               │
+│                                                                              │
+│ Response Headers:                                                            │
+│   Server: Tengine                                                            │
+│   Content-Type: application/json                                             │
+│   Content-Length: 64                                                         │
+│   Connection: keep-alive                                                     │
+│   Date: Thu, 22 Jan 2026 18:12:34 GMT                                        │
+│   Server-Timing: inner; dur=464,tt_agw; dur=81,                              │
+│ cdn-cache;desc=MISS,edge;dur=10,origin;dur=547                               │
+│   X-Envoy-Response-Flags: -                                                  │
+│   X-Tt-Logid: 2026012302123323A20025BDD11799DB4A                             │
+│   Strict-Transport-Security: max-age=31536000; includeSubDomains             │
+│   x-tt-trace-host:                                                           │
+│ 011e95be3463cc7ff0f039e494d9938e34fc8438a5377be04dfa6623c00cec30cfa020c5cd7f │
+│ d0e6348d8dfe9261f5ed3f7fc5e3ea2da089efc626e38ae294178ee7ca2933dd24ada7e4a766 │
+│ 3e369b1fbdbd90afd9e4ac8cc9f7cdf1678c29bdd3                                   │
+│   x-tt-trace-tag: id=03;cdn-cache=miss;type=dyn                              │
+│   x-tt-trace-id: 00-26012302123323A20025BDD11799DB4A-798E202791EFA77E-00     │
+│   X-TT-TIMESTAMP: 1769105554.006                                             │
+│   Via: cache1.l2cn3031[547,0], ens-cache19.cn8000[557,0]                     │
+│   Timing-Allow-Origin: *                                                     │
+│   EagleId: dcb5a52717691055534585471e                                        │
+│                                                                              │
+│ Body:                                                                        │
+╰──────────────────────────────────────────────────────────────────────────────╯
+{                                                                               
+  "code": 250000009,                                                            
+  "msg": "[Coze Knowledge] fetching data failed"                                
+}                                                                               
+
+   [1/1] ❌ 导入失败: [Coze Knowledge] fetching data failed
+
+📁 [3/46] 数据集: 政策文件_法律法规
+   文件数: 22
+   ✅ 成功读取 22 个文件
+╭──────────────────────────────── HTTP Request ────────────────────────────────╮
+│ POST https://integration.coze.cn/v1/knowledge_base/batch_import              │
+│                                                                              │
+│ Headers:                                                                     │
+│   x-tt-env: ppe_coze_knowledge                                               │
+│   x-use-ppe: 1                                                               │
+│   x-coze-token: Bearer                                                       │
+│ M2JnN01PN0FZNzN1a05TZGR4TzVXTDBUQTZ6MlUyZ3k6UEJWNXVhRVlwM09SeTZsRWkyd29aZVNV │
+│ T0dmU2ZCWEFZdG1xNlV4bWcxU2VYdUZWR2xMSnU3dndCVllYY1ljZQ==                     │
+│   Content-Type: application/json                                             │
+│   Authorization: Bearer M2JnN01P...ZQ==                                      │
+│   X-Client-Sdk: coze-coding-dev-sdk-python/0.5.0                             │
+│                                                                              │
+│ Body:                                                                        │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+{                                                                               
+  "dataset": "政策文件_法律法规",                                               
+  "data": [                                                                     
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "2024年04⽉26⽇ 17:00\n关于《中华⼈⺠共和国学位法（草案）》的 
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "国务院关于修改《国家科学技术奖励条例》的决定（中华⼈⺠共和国 
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "中华⼈⺠共和国保守国家秘密法实施条例（中华⼈⺠共和国国务院令 
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "中华人民共和国国务院令 中华人民共和国国务院令 \n第769号\n现公
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "2013-2019\n编注\n \n2001-2013\n编注\n \n1993-2001\n编注\n \n1
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "Explore our developer-friendly HTML to PDF API Printed using 
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "中共中央办公厅、国务院办公厅印发《关于进一步加强科研诚信建设 
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "Explore our developer-friendly HTML to PDF API Printed using 
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "国务院学位委员会 \n关于在学位授予工作中加强学术道德和学术规范
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "226\n中共中央办公厅 国务院办公厅印发《关于\n进一步加强科研诚 
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "登\n下载图⽚版下载⽂字版\n 搜索 ⽆障碍浏览\n \n普通⾼等学校学
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "中华人民共和国学位法\n2024-04-26 21:21     来源：  新华社\n\n
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "中华⼈⺠共和国植物新品种保护条例（中华⼈⺠共和国国务院令 第 8
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "— 1 —\n《高等学校预防与处理学术不端行为办法》已于 2016 年 4\n
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "教育部关于印发教育部社会科学委员会\n《高等学校哲学社会科学研 
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "信息名称：国务院\n信息索引：\u0000\u0000\u0000A\u0000\n发⽂字
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "中共中央办公厅\n \n国务院办公厅印发\n \n《\n关于进一步加强科 
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "信息名称：教育部\n信息索引：\u0000\u0000\u0000A\u0000\n发⽂字
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "国务院学位委员会关于在学位授予工作中加强学术道德和学术规范建 
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "信息名称：《学位\n信息索引：\u0000\u0000\u0000A\u0000\n发⽂字
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "JiangSu Fss Communication\n《科研诚信案件调查处理规则 （试行 
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "简体 | 繁体 | English2025年9⽉22⽇ 星期⼀ 客⼾端 | 公务邮\n \
+    }                                                                           
+  ]                                                                             
+}                                                                               
+
+╭─────────────────────────────── HTTP Response ────────────────────────────────╮
+│ Status: 200 OK                                                               │
+│                                                                              │
+│ Response Headers:                                                            │
+│   Server: volc-dcdn                                                          │
+│   Content-Type: application/json                                             │
+│   Content-Length: 64                                                         │
+│   Connection: keep-alive                                                     │
+│   Date: Thu, 22 Jan 2026 18:12:55 GMT                                        │
+│   Server-Timing: inner; dur=142, cdn-cache;desc=MISS, origin;dur=264,        │
+│ edge;dur=0, tt_agw; dur=53                                                   │
+│   X-Envoy-Response-Flags: -                                                  │
+│   X-Tt-Logid: 2026012302125523645E7F2BFF90D0A679                             │
+│   Strict-Transport-Security: max-age=31536000; includeSubDomains             │
+│   x-tt-trace-host:                                                           │
+│ 011e95be3463cc7ff0f039e494d9938e341f5056a7346042631cde14b761bf842b8691fe8817 │
+│ bebaf3ab0d19d17895f89b2425233b88e0edcbfd77078c5a15b06f922e15720d70ed8f4f1f40 │
+│ b04a5d4fda820b3378e1c65075d73b1c18e4e14973                                   │
+│   x-tt-trace-tag: id=5                                                       │
+│   x-tt-trace-id: 00-e6e8d053030109d4199e672108d90000-e6e8d053030109d4-01     │
+│   X-TT-TIMESTAMP: 1769105575.865                                             │
+│   via: n123-006-122-160.hnzzcu08-container.Creative                          │
+│   x-request-ip: 115.191.1.219                                                │
+│   x-dsa-trace-id: 17691055751e265de9ec4349cff71c56bb77889527                 │
+│   X-Dsa-Origin-Status: 200                                                   │
+│                                                                              │
+│ Body:                                                                        │
+╰──────────────────────────────────────────────────────────────────────────────╯
+{                                                                               
+  "code": 250000009,                                                            
+  "msg": "[Coze Knowledge] fetching data failed"                                
+}                                                                               
+
+   [1/1] ❌ 导入失败: [Coze Knowledge] fetching data failed
+
+📁 [4/46] 数据集: 政策文件_国家级
+   文件数: 23
+Ignoring wrong pointing object 9 0 (offset 0)
+Ignoring wrong pointing object 11 0 (offset 0)
+   ✅ 成功读取 23 个文件
+╭──────────────────────────────── HTTP Request ────────────────────────────────╮
+│ POST https://integration.coze.cn/v1/knowledge_base/batch_import              │
+│                                                                              │
+│ Headers:                                                                     │
+│   x-tt-env: ppe_coze_knowledge                                               │
+│   x-use-ppe: 1                                                               │
+│   x-coze-token: Bearer                                                       │
+│ M2JnN01PN0FZNzN1a05TZGR4TzVXTDBUQTZ6MlUyZ3k6UEJWNXVhRVlwM09SeTZsRWkyd29aZVNV │
+│ T0dmU2ZCWEFZdG1xNlV4bWcxU2VYdUZWR2xMSnU3dndCVllYY1ljZQ==                     │
+│   Content-Type: application/json                                             │
+│   Authorization: Bearer M2JnN01P...ZQ==                                      │
+│   X-Client-Sdk: coze-coding-dev-sdk-python/0.5.0                             │
+│                                                                              │
+│ Body:                                                                        │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+{                                                                               
+  "dataset": "政策文件_国家级",                                                 
+  "data": [                                                                     
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n \n\n"                         
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "- 1 -\n关于《负责任研究行为规范指引（2023）》的解读\n近日，科
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": " - 1 - \n \n中华人民共和国人类遗传资源管理条例 \n \n(2019 年 
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "114\n科技部印发《关于破除科技评价中“唯论文”\n不良导向的若干措
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "中共中央办公厅 国务院办公厅印发 \n《关于加强科技伦理治理的意 
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "哲学社会科学科研诚信建设实施办法（社科办字〔2019〕10号）\n哲 
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "ICS 01.140.40\nA 19\nCY\n中 华 人 民 共 和 国 新 闻 出 版 行 
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": " \n关于进一步弘扬科学家精神加强作风 \n和学风建设的意见 \n中办
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"    
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "226\n中共中央办公厅 国务院办公厅印发《关于\n进一步加强科研诚 
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "负责任研究行为规范指引\n（2023）\n科技部监督司编\n2023 年 12 
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "国家自然科学基金项目科研不端行为调查处理办法（国科金发诚\n〔2
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "科技部印发《关于破除科技评价中“唯论文”不良导向的若干措施（试 
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "国家卫生健康委员会规章\n国家卫生健康委员会发布\n- 1 -\n涉及人
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": " \n \n科技部等二十二部门关于印发《科研失信\n行为调查处理规则 
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "ICS35.030\nCCSL80\n中 华 人 民 共 和 国 国 家 标 准\nGB45438—
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "226\n中共中央办公厅 国务院办公厅印发《关于\n进一步加强科研诚 
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "科研诚信规范手册\n国家自然科学基金《科研诚信规范手册》编写组\
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "中华人民共和国数据安全法 \n（2021 年 6 月 10 日第十三届全国人
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "卫生健康委 科技部 中医药局关于印发\n医学科研诚信和相关行为规 
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": " \n \n科技部等二十二部门关于印发《科研失信\n行为调查处理规则 
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "国家自然科学基金项目科研不端行为调查处理办法（国科金发诚\n〔2
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "科学技术部规章\nX\n科学技术部发布\n- 1 -\n科学技术活动违规行 
+    }                                                                           
+  ]                                                                             
+}                                                                               
+
+╭─────────────────────────────── HTTP Response ────────────────────────────────╮
+│ Status: 200 OK                                                               │
+│                                                                              │
+│ Response Headers:                                                            │
+│   Server: Tengine                                                            │
+│   Content-Type: application/json                                             │
+│   Content-Length: 64                                                         │
+│   Connection: keep-alive                                                     │
+│   Date: Thu, 22 Jan 2026 18:13:05 GMT                                        │
+│   Server-Timing: inner; dur=167,tt_agw; dur=57,                              │
+│ cdn-cache;desc=MISS,edge;dur=0,origin;dur=317                                │
+│   X-Envoy-Response-Flags: -                                                  │
+│   X-Tt-Logid: 202601230213048491AB8254F755F9BBA6                             │
+│   Strict-Transport-Security: max-age=31536000; includeSubDomains             │
+│   x-tt-trace-host:                                                           │
+│ 01df5409c913f3fb468421262b6b13ea441498fb6e265f36431e2b77feac40eac1d17d20175c │
+│ c4955f12d6dd4e7f94bdf2b1e6832a67bda446ead20f37b84aa4bf4508944a7f9a0058e7b5e6 │
+│ 53faf3fbe117ec21890784b43d41498473e56272a0                                   │
+│   x-tt-trace-tag: id=03;cdn-cache=miss;type=dyn                              │
+│   x-tt-trace-id: 00-2601230213048491AB8254F755F9BBA6-70FE9B7D5E716D11-00     │
+│   X-TT-TIMESTAMP: 1769105585.250                                             │
+│   Via: ens-cache28.cn8000[317,0]                                             │
+│   Timing-Allow-Origin: *                                                     │
+│   EagleId: dcb5a53017691055849424769e                                        │
+│                                                                              │
+│ Body:                                                                        │
+╰──────────────────────────────────────────────────────────────────────────────╯
+{                                                                               
+  "code": 250000009,                                                            
+  "msg": "[Coze Knowledge] fetching data failed"                                
+}                                                                               
+
+   [1/1] ❌ 导入失败: [Coze Knowledge] fetching data failed
+
+📁 [5/46] 数据集: 政策文件_部门规章
+   文件数: 12
+   ✅ 成功读取 12 个文件
+╭──────────────────────────────── HTTP Request ────────────────────────────────╮
+│ POST https://integration.coze.cn/v1/knowledge_base/batch_import              │
+│                                                                              │
+│ Headers:                                                                     │
+│   x-tt-env: ppe_coze_knowledge                                               │
+│   x-use-ppe: 1                                                               │
+│   x-coze-token: Bearer                                                       │
+│ M2JnN01PN0FZNzN1a05TZGR4TzVXTDBUQTZ6MlUyZ3k6UEJWNXVhRVlwM09SeTZsRWkyd29aZVNV │
+│ T0dmU2ZCWEFZdG1xNlV4bWcxU2VYdUZWR2xMSnU3dndCVllYY1ljZQ==                     │
+│   Content-Type: application/json                                             │
+│   Authorization: Bearer M2JnN01P...ZQ==                                      │
+│   X-Client-Sdk: coze-coding-dev-sdk-python/0.5.0                             │
+│                                                                              │
+│ Body:                                                                        │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+{                                                                               
+  "dataset": "政策文件_部门规章",                                               
+  "data": [                                                                     
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "政策法规\n  当前位置:⾸⻚ > 成果转化 > 政策法规\n【字体：  ⼤
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "简 | 繁 | ⽆障碍浏览\n请输⼊关键字\n⾸⻚ 新闻动态\n 政务公开 
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "您当前的位置：  ⾸⻚   >  信息公开   >  政策法规   >  厅规范 
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "—— 1 —— \n \n \n赣教研字〔2023〕16号 \n \n \n \n各高校: \n为 
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "分享：\n 浙江省科学技术厅关于印发《浙江省科研诚信信息管理办法
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "您⽬前的位置：  ⾸⻚» 规章制度\n⻘海省省级科技计划科研诚信管 
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "鲁科字〔 2024 〕84 号\n各有关单位：\n为进⼀步加强科研诚信管理
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "\n\n\n\n\n\n\n\n\n\n"                                        
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "⻓者助⼿\n 个⼈中⼼ \n 智能机器⼈ \n ⽆障碍  繁體\n⾸⻚ > 政 
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "⽹站⾸⻚ >> 科技政策 >> 辽宁科技政策\n辽科发〔 2022 〕 55 号 
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "\n\n\n\n\n\n\n\n\n\n\n\n\n\n"                                
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": " 国家中医药管理局  科技司（中药创新与发展司）  \n  邮箱\n  微
+    }                                                                           
+  ]                                                                             
+}                                                                               
+
+╭─────────────────────────────── HTTP Response ────────────────────────────────╮
+│ Status: 200 OK                                                               │
+│                                                                              │
+│ Response Headers:                                                            │
+│   Server: Tengine                                                            │
+│   Content-Type: application/json                                             │
+│   Content-Length: 64                                                         │
+│   Connection: keep-alive                                                     │
+│   Date: Thu, 22 Jan 2026 18:13:14 GMT                                        │
+│   Server-Timing: inner; dur=83,tt_agw; dur=39,                               │
+│ cdn-cache;desc=MISS,edge;dur=21,origin;dur=187                               │
+│   X-Envoy-Response-Flags: -                                                  │
+│   X-Tt-Logid: 20260123021313CE07CB0BC23D78A9598D                             │
+│   Strict-Transport-Security: max-age=31536000; includeSubDomains             │
+│   x-tt-trace-host:                                                           │
+│ 0177a2686b74cefea358ed6c68d75da3810038cad0d1748c5827072a29c47826be77d8ecf6c0 │
+│ 79a740e70fdea3d83d1ce4e51a54ca74e43f57e9013f437f9c843ce9fd32b8539ce4abd97327 │
+│ db6d4a9c5fbbb0a0c5c6d8f4566fcaa25699cb24e4                                   │
+│   x-tt-trace-tag: id=03;cdn-cache=miss;type=dyn                              │
+│   x-tt-trace-id: 00-260123021313CE07CB0BC23D78A9598D-2309F337A84E2079-00     │
+│   X-TT-TIMESTAMP: 1769105594.027                                             │
+│   Via: cache47.l2cn3031[187,0], ens-cache12.cn8000[208,0]                    │
+│   Timing-Allow-Origin: *                                                     │
+│   EagleId: dcb5a52017691055938348469e                                        │
+│                                                                              │
+│ Body:                                                                        │
+╰──────────────────────────────────────────────────────────────────────────────╯
+{                                                                               
+  "code": 250000009,                                                            
+  "msg": "[Coze Knowledge] fetching data failed"                                
+}                                                                               
+
+   [1/1] ❌ 导入失败: [Coze Knowledge] fetching data failed
+
+📁 [6/46] 数据集: 政策文件_学校_985高校
+   文件数: 1
+   ✅ 成功读取 1 个文件
+╭──────────────────────────────── HTTP Request ────────────────────────────────╮
+│ POST https://integration.coze.cn/v1/knowledge_base/batch_import              │
+│                                                                              │
+│ Headers:                                                                     │
+│   x-tt-env: ppe_coze_knowledge                                               │
+│   x-use-ppe: 1                                                               │
+│   x-coze-token: Bearer                                                       │
+│ M2JnN01PN0FZNzN1a05TZGR4TzVXTDBUQTZ6MlUyZ3k6UEJWNXVhRVlwM09SeTZsRWkyd29aZVNV │
+│ T0dmU2ZCWEFZdG1xNlV4bWcxU2VYdUZWR2xMSnU3dndCVllYY1ljZQ==                     │
+│   Content-Type: application/json                                             │
+│   Authorization: Bearer M2JnN01P...ZQ==                                      │
+│   X-Client-Sdk: coze-coding-dev-sdk-python/0.5.0                             │
+│                                                                              │
+│ Body:                                                                        │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+{                                                                               
+  "dataset": "政策文件_学校_985高校",                                           
+  "data": [                                                                     
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "已更新获取的资料：\n\t北京大学\n\t北京航空航天大学\n\t北京理 
+    }                                                                           
+  ]                                                                             
+}                                                                               
+
+╭─────────────────────────────── HTTP Response ────────────────────────────────╮
+│ Status: 200 OK                                                               │
+│                                                                              │
+│ Response Headers:                                                            │
+│   Server: Tengine                                                            │
+│   Content-Type: application/json                                             │
+│   Content-Length: 64                                                         │
+│   Connection: keep-alive                                                     │
+│   Date: Thu, 22 Jan 2026 18:13:14 GMT                                        │
+│   Server-Timing: inner; dur=40,tt_agw; dur=6,                                │
+│ cdn-cache;desc=MISS,edge;dur=18,origin;dur=73                                │
+│   X-Envoy-Response-Flags: -                                                  │
+│   X-Tt-Logid: 20260123021314DA1F5853EB07B9D40887                             │
+│   Strict-Transport-Security: max-age=31536000; includeSubDomains             │
+│   x-tt-trace-host:                                                           │
+│ 01f2343045581a4f261c455aa47243b81e77cc140477a39a202f7e5efe1b22a071722824d2ca │
+│ b302706764a8e00aec7792b197bd67ebf15c24b9cc67443c851e5a05b1d5ceefc4483176f467 │
+│ 8bbae4e4d3ba61e9a2e597361b9b639161b81fca0d                                   │
+│   x-tt-trace-tag: id=03;cdn-cache=miss;type=dyn                              │
+│   x-tt-trace-id: 00-260123021314DA1F5853EB07B9D40887-23116563A1CF2F8D-00     │
+│   X-TT-TIMESTAMP: 1769105594.196                                             │
+│   Via: cache20.l2cn3031[73,0], ens-cache11.cn8000[91,0]                      │
+│   Timing-Allow-Origin: *                                                     │
+│   EagleId: dcb5a51f17691055941164434e                                        │
+│                                                                              │
+│ Body:                                                                        │
+╰──────────────────────────────────────────────────────────────────────────────╯
+{                                                                               
+  "code": 250000009,                                                            
+  "msg": "[Coze Knowledge] fetching data failed"                                
+}                                                                               
+
+   [1/1] ❌ 导入失败: [Coze Knowledge] fetching data failed
+
+📁 [7/46] 数据集: 政策文件_学校_985高校_南开大学
+   文件数: 7
+   ✅ 成功读取 5 个文件
+╭──────────────────────────────── HTTP Request ────────────────────────────────╮
+│ POST https://integration.coze.cn/v1/knowledge_base/batch_import              │
+│                                                                              │
+│ Headers:                                                                     │
+│   x-tt-env: ppe_coze_knowledge                                               │
+│   x-use-ppe: 1                                                               │
+│   x-coze-token: Bearer                                                       │
+│ M2JnN01PN0FZNzN1a05TZGR4TzVXTDBUQTZ6MlUyZ3k6UEJWNXVhRVlwM09SeTZsRWkyd29aZVNV │
+│ T0dmU2ZCWEFZdG1xNlV4bWcxU2VYdUZWR2xMSnU3dndCVllYY1ljZQ==                     │
+│   Content-Type: application/json                                             │
+│   Authorization: Bearer M2JnN01P...ZQ==                                      │
+│   X-Client-Sdk: coze-coding-dev-sdk-python/0.5.0                             │
+│                                                                              │
+│ Body:                                                                        │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+{                                                                               
+  "dataset": "政策文件_学校_985高校_南开大学",                                  
+  "data": [                                                                     
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"        
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"                              
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "\n\n\n\n\n\n\n\n\n\n"                                        
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "\n\n\n\n\n\n\n\n\n\n\n\n\n\n"                                
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "----Image alt text---->南大标<----media/image1.png----\n研究 
+    }                                                                           
+  ]                                                                             
+}                                                                               
+
+╭─────────────────────────────── HTTP Response ────────────────────────────────╮
+│ Status: 200 OK                                                               │
+│                                                                              │
+│ Response Headers:                                                            │
+│   Server: volc-dcdn                                                          │
+│   Content-Type: application/json                                             │
+│   Content-Length: 64                                                         │
+│   Connection: keep-alive                                                     │
+│   Date: Thu, 22 Jan 2026 18:13:15 GMT                                        │
+│   Server-Timing: inner; dur=66, cdn-cache;desc=MISS, origin;dur=171,         │
+│ edge;dur=0, tt_agw; dur=16                                                   │
+│   X-Envoy-Response-Flags: -                                                  │
+│   X-Tt-Logid: 20260123021315ED20826D2BC0F8CA50A9                             │
+│   Strict-Transport-Security: max-age=31536000; includeSubDomains             │
+│   x-tt-trace-host:                                                           │
+│ 0177a2686b74cefea358ed6c68d75da3812d69dbc2b84e41b3d025077cca23107e52f44c2f1b │
+│ cebab32aedc9832ba306de28210400cc66d7987a2ec53865a572d259232608c65b964e6c9e67 │
+│ dcd44c809f84da16c8c62cbd922a5f68aef1454b86                                   │
+│   x-tt-trace-tag: id=5                                                       │
+│   x-tt-trace-id: 00-e6e91e6703010bf8e2a1af5dc69c0000-e6e91e6703010bf8-01     │
+│   X-TT-TIMESTAMP: 1769105595.758                                             │
+│   via: n123-006-122-160.hnzzcu08-container.Creative                          │
+│   x-request-ip: 115.191.1.197                                                │
+│   x-dsa-trace-id: 1769105595d831cab52ae74bf2ee91b77cee7d4207                 │
+│   X-Dsa-Origin-Status: 200                                                   │
+│                                                                              │
+│ Body:                                                                        │
+╰──────────────────────────────────────────────────────────────────────────────╯
+{                                                                               
+  "code": 250000009,                                                            
+  "msg": "[Coze Knowledge] fetching data failed"                                
+}                                                                               
+
+   [1/1] ❌ 导入失败: [Coze Knowledge] fetching data failed
+
+📁 [8/46] 数据集: 政策文件_学校_985高校_大连理工大学
+   文件数: 2
+   ✅ 成功读取 2 个文件
+╭──────────────────────────────── HTTP Request ────────────────────────────────╮
+│ POST https://integration.coze.cn/v1/knowledge_base/batch_import              │
+│                                                                              │
+│ Headers:                                                                     │
+│   x-tt-env: ppe_coze_knowledge                                               │
+│   x-use-ppe: 1                                                               │
+│   x-coze-token: Bearer                                                       │
+│ M2JnN01PN0FZNzN1a05TZGR4TzVXTDBUQTZ6MlUyZ3k6UEJWNXVhRVlwM09SeTZsRWkyd29aZVNV │
+│ T0dmU2ZCWEFZdG1xNlV4bWcxU2VYdUZWR2xMSnU3dndCVllYY1ljZQ==                     │
+│   Content-Type: application/json                                             │
+│   Authorization: Bearer M2JnN01P...ZQ==                                      │
+│   X-Client-Sdk: coze-coding-dev-sdk-python/0.5.0                             │
+│                                                                              │
+│ Body:                                                                        │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+{                                                                               
+  "dataset": "政策文件_学校_985高校_大连理工大学",                              
+  "data": [                                                                     
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "大连理工大学研究生学术规范 \n2015-06-27  点击：[2772] \n  \n 
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "大连理工大学学术规范制度和不端学术行为查处办法 \n2014-10-20  
+    }                                                                           
+  ]                                                                             
+}                                                                               
+
+╭─────────────────────────────── HTTP Response ────────────────────────────────╮
+│ Status: 200 OK                                                               │
+│                                                                              │
+│ Response Headers:                                                            │
+│   Server: Tengine                                                            │
+│   Content-Type: application/json                                             │
+│   Content-Length: 64                                                         │
+│   Connection: keep-alive                                                     │
+│   Date: Thu, 22 Jan 2026 18:13:16 GMT                                        │
+│   Server-Timing: inner; dur=291,tt_agw; dur=23,                              │
+│ cdn-cache;desc=MISS,edge;dur=22,origin;dur=337                               │
+│   X-Envoy-Response-Flags: -                                                  │
+│   X-Tt-Logid: 20260123021316BC1474E52DAFAAF327CF                             │
+│   Strict-Transport-Security: max-age=31536000; includeSubDomains             │
+│   x-tt-trace-host:                                                           │
+│ 018e06d31c5aed6c47cad41db30e877b892344aa3ae060b926b653473864f7c666baa8b1def9 │
+│ 90809a96b23f59dcd968bd04472101e1d050877169d43003105e0e1f39e4347dad220d437098 │
+│ fe606dc6dfe1ca81692be2337c23a5c2b4c5bd6233                                   │
+│   x-tt-trace-tag: id=03;cdn-cache=miss;type=dyn                              │
+│   x-tt-trace-id: 00-260123021316BC1474E52DAFAAF327CF-363146423A6F2842-00     │
+│   X-TT-TIMESTAMP: 1769105596.384                                             │
+│   Via: cache17.l2cm9-6[337,0], ens-cache19.cn8000[359,0]                     │
+│   Timing-Allow-Origin: *                                                     │
+│   EagleId: dcb5a52717691055960453232e                                        │
+│                                                                              │
+│ Body:                                                                        │
+╰──────────────────────────────────────────────────────────────────────────────╯
+{                                                                               
+  "code": 250000009,                                                            
+  "msg": "[Coze Knowledge] fetching data failed"                                
+}                                                                               
+
+   [1/1] ❌ 导入失败: [Coze Knowledge] fetching data failed
+
+📁 [9/46] 数据集: 政策文件_学校_985高校_华东师范大学
+   文件数: 6
+   ✅ 成功读取 4 个文件
+╭──────────────────────────────── HTTP Request ────────────────────────────────╮
+│ POST https://integration.coze.cn/v1/knowledge_base/batch_import              │
+│                                                                              │
+│ Headers:                                                                     │
+│   x-tt-env: ppe_coze_knowledge                                               │
+│   x-use-ppe: 1                                                               │
+│   x-coze-token: Bearer                                                       │
+│ M2JnN01PN0FZNzN1a05TZGR4TzVXTDBUQTZ6MlUyZ3k6UEJWNXVhRVlwM09SeTZsRWkyd29aZVNV │
+│ T0dmU2ZCWEFZdG1xNlV4bWcxU2VYdUZWR2xMSnU3dndCVllYY1ljZQ==                     │
+│   Content-Type: application/json                                             │
+│   Authorization: Bearer M2JnN01P...ZQ==                                      │
+│   X-Client-Sdk: coze-coding-dev-sdk-python/0.5.0                             │
+│                                                                              │
+│ Body:                                                                        │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+{                                                                               
+  "dataset": "政策文件_学校_985高校_华东师范大学",                              
+  "data": [                                                                     
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "负责任研究行为规范指引\n（2023）\n科技部监督司编\n2023 年 12 
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "科技部等二十二部门关于印发《科研失信行为科技部等二十二部门关 
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "https://xxgk.ecnu.edu.cn/11882/list2.htm"                    
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": " \n \n \n \n \n \n华师〔2008〕20号 \n \n \n关于印发《学术违规
+    }                                                                           
+  ]                                                                             
+}                                                                               
+
+╭─────────────────────────────── HTTP Response ────────────────────────────────╮
+│ Status: 200 OK                                                               │
+│                                                                              │
+│ Response Headers:                                                            │
+│   Server: volc-dcdn                                                          │
+│   Content-Type: application/json                                             │
+│   Content-Length: 64                                                         │
+│   Connection: keep-alive                                                     │
+│   Date: Thu, 22 Jan 2026 18:13:21 GMT                                        │
+│   Server-Timing: inner; dur=48, cdn-cache;desc=MISS, origin;dur=176,         │
+│ edge;dur=0, tt_agw; dur=20                                                   │
+│   X-Envoy-Response-Flags: -                                                  │
+│   X-Tt-Logid: 202601230213206597C7E0D82870A0257E                             │
+│   Strict-Transport-Security: max-age=31536000; includeSubDomains             │
+│   x-tt-trace-host:                                                           │
+│ 011e95be3463cc7ff0f039e494d9938e34ce601c83ca97fca83c12eed4156e4a17a70a1f2e61 │
+│ c48e4466bd67ec663db6e5ff46a4977e12afa3b03aff21fd8ba0aa099619f6b9cb4372dec11c │
+│ d5f361e5c2059b783273c46e9917ca41d86b5c210b                                   │
+│   x-tt-trace-tag: id=5                                                       │
+│   x-tt-trace-id: 00-e6e9334903010f0337c378bf8f3d0000-e6e9334903010f03-01     │
+│   X-TT-TIMESTAMP: 1769105601.106                                             │
+│   via: n111-047-131-051.xycm-container.Creative                              │
+│   x-request-ip: 115.191.1.219                                                │
+│   x-dsa-trace-id: 176910560045f231ae5dcc604401d0be781eda144c                 │
+│   X-Dsa-Origin-Status: 200                                                   │
+│                                                                              │
+│ Body:                                                                        │
+╰──────────────────────────────────────────────────────────────────────────────╯
+{                                                                               
+  "code": 250000009,                                                            
+  "msg": "[Coze Knowledge] fetching data failed"                                
+}                                                                               
+
+   [1/1] ❌ 导入失败: [Coze Knowledge] fetching data failed
+
+📁 [10/46] 数据集: 政策文件_学校_985高校_中国人民大学
+   文件数: 3
+   ✅ 成功读取 3 个文件
+╭──────────────────────────────── HTTP Request ────────────────────────────────╮
+│ POST https://integration.coze.cn/v1/knowledge_base/batch_import              │
+│                                                                              │
+│ Headers:                                                                     │
+│   x-tt-env: ppe_coze_knowledge                                               │
+│   x-use-ppe: 1                                                               │
+│   x-coze-token: Bearer                                                       │
+│ M2JnN01PN0FZNzN1a05TZGR4TzVXTDBUQTZ6MlUyZ3k6UEJWNXVhRVlwM09SeTZsRWkyd29aZVNV │
+│ T0dmU2ZCWEFZdG1xNlV4bWcxU2VYdUZWR2xMSnU3dndCVllYY1ljZQ==                     │
+│   Content-Type: application/json                                             │
+│   Authorization: Bearer M2JnN01P...ZQ==                                      │
+│   X-Client-Sdk: coze-coding-dev-sdk-python/0.5.0                             │
+│                                                                              │
+│ Body:                                                                        │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+{                                                                               
+  "dataset": "政策文件_学校_985高校_中国人民大学",                              
+  "data": [                                                                     
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "规章\n制度篇\n\n1\n中国人民大学研究生手册       规章制度篇\n 
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "中国人民大学研究生学位论文及其摘要的撰写和印制要求\n时间：201
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "学业篇\n\n中国人民大学研究生手册       学业篇 1\n目录CONTENTS
+    }                                                                           
+  ]                                                                             
+}                                                                               
+
+╭─────────────────────────────── HTTP Response ────────────────────────────────╮
+│ Status: 200 OK                                                               │
+│                                                                              │
+│ Response Headers:                                                            │
+│   Server: volc-dcdn                                                          │
+│   Content-Type: application/json                                             │
+│   Content-Length: 64                                                         │
+│   Connection: keep-alive                                                     │
+│   Date: Thu, 22 Jan 2026 18:13:25 GMT                                        │
+│   Server-Timing: inner; dur=157, cdn-cache;desc=MISS, origin;dur=320,        │
+│ edge;dur=0, tt_agw; dur=57                                                   │
+│   X-Envoy-Response-Flags: -                                                  │
+│   X-Tt-Logid: 20260123021324821D9CA324FB02B813D3                             │
+│   Strict-Transport-Security: max-age=31536000; includeSubDomains             │
+│   x-tt-trace-host:                                                           │
+│ 01f3289b31d3cc3a3d9d6f6abb9eb2b6f133b27bcdda7a50008107b7785deb9f341aaf750284 │
+│ 59edca18ff3ca7d2dda72bfdfd3d71ca54925140d31cfb3d73f9e47b578c764935e608ff63b9 │
+│ d14dc84310d2c0361f12c0ea5d708c6543e193e96a                                   │
+│   x-tt-trace-tag: id=5                                                       │
+│   x-tt-trace-id: 00-e6e9431103010f526d146754ad7d0000-e6e9431103010f52-01     │
+│   X-TT-TIMESTAMP: 1769105605.288                                             │
+│   via: n120-220-050-089.sdbinzhou-cm13-container.Creative                    │
+│   x-request-ip: 115.191.1.199                                                │
+│   x-dsa-trace-id: 1769105604c602ea7ce28723a04fb489f3e53b1161                 │
+│   X-Dsa-Origin-Status: 200                                                   │
+│                                                                              │
+│ Body:                                                                        │
+╰──────────────────────────────────────────────────────────────────────────────╯
+{                                                                               
+  "code": 250000009,                                                            
+  "msg": "[Coze Knowledge] fetching data failed"                                
+}                                                                               
+
+   [1/1] ❌ 导入失败: [Coze Knowledge] fetching data failed
+
+📁 [11/46] 数据集: 政策文件_学校_985高校_南京大学
+   文件数: 3
+   ✅ 成功读取 3 个文件
+╭──────────────────────────────── HTTP Request ────────────────────────────────╮
+│ POST https://integration.coze.cn/v1/knowledge_base/batch_import              │
+│                                                                              │
+│ Headers:                                                                     │
+│   x-tt-env: ppe_coze_knowledge                                               │
+│   x-use-ppe: 1                                                               │
+│   x-coze-token: Bearer                                                       │
+│ M2JnN01PN0FZNzN1a05TZGR4TzVXTDBUQTZ6MlUyZ3k6UEJWNXVhRVlwM09SeTZsRWkyd29aZVNV │
+│ T0dmU2ZCWEFZdG1xNlV4bWcxU2VYdUZWR2xMSnU3dndCVllYY1ljZQ==                     │
+│   Content-Type: application/json                                             │
+│   Authorization: Bearer M2JnN01P...ZQ==                                      │
+│   X-Client-Sdk: coze-coding-dev-sdk-python/0.5.0                             │
+│                                                                              │
+│ Body:                                                                        │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+{                                                                               
+  "dataset": "政策文件_学校_985高校_南京大学",                                  
+  "data": [                                                                     
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "\n\n\n\n\n\n\n\n\n\n"                                        
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "\n\n\n\n\n\n\n\n\n\n"                                        
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "首页  学风建设  政策文件\n科研失信行为调查处理规则\n发布时间 
+    }                                                                           
+  ]                                                                             
+}                                                                               
+
+╭─────────────────────────────── HTTP Response ────────────────────────────────╮
+│ Status: 200 OK                                                               │
+│                                                                              │
+│ Response Headers:                                                            │
+│   Server: volc-dcdn                                                          │
+│   Content-Type: application/json                                             │
+│   Content-Length: 64                                                         │
+│   Connection: keep-alive                                                     │
+│   Date: Thu, 22 Jan 2026 18:13:25 GMT                                        │
+│   Server-Timing: inner; dur=61, cdn-cache;desc=MISS, origin;dur=150,         │
+│ edge;dur=0, tt_agw; dur=13                                                   │
+│   X-Envoy-Response-Flags: -                                                  │
+│   X-Tt-Logid: 202601230213252F13F9181E13CD20F6B4                             │
+│   Strict-Transport-Security: max-age=31536000; includeSubDomains             │
+│   x-tt-trace-host:                                                           │
+│ 0156ecc13f45f099193b9b999114dd8ab026817c14d67d2dcfa169835937b507c130e3118f1b │
+│ 269a9c98a77ed6c7b9592edc38cbb4ceef2cd672c3595f81243fbdcc6dd072af374dee536c85 │
+│ 1cb02a7d3f33ee2f8e5747ea08a529f4589cd1fb3b                                   │
+│   x-tt-trace-tag: id=5                                                       │
+│   x-tt-trace-id: 00-e6e9467203010bfc0986a3badcba0000-e6e9467203010bfc-01     │
+│   X-TT-TIMESTAMP: 1769105605.985                                             │
+│   via: n120-220-050-111.sdbinzhou-cm13-container.Creative                    │
+│   x-request-ip: 115.190.93.94                                                │
+│   x-dsa-trace-id: 1769105605a146111ad9423b6405717dbf19b1a9af                 │
+│   X-Dsa-Origin-Status: 200                                                   │
+│                                                                              │
+│ Body:                                                                        │
+╰──────────────────────────────────────────────────────────────────────────────╯
+{                                                                               
+  "code": 250000009,                                                            
+  "msg": "[Coze Knowledge] fetching data failed"                                
+}                                                                               
+
+   [1/1] ❌ 导入失败: [Coze Knowledge] fetching data failed
+
+📁 [12/46] 数据集: 政策文件_学校_985高校_兰州大学
+   文件数: 6
+   ✅ 成功读取 6 个文件
+╭──────────────────────────────── HTTP Request ────────────────────────────────╮
+│ POST https://integration.coze.cn/v1/knowledge_base/batch_import              │
+│                                                                              │
+│ Headers:                                                                     │
+│   x-tt-env: ppe_coze_knowledge                                               │
+│   x-use-ppe: 1                                                               │
+│   x-coze-token: Bearer                                                       │
+│ M2JnN01PN0FZNzN1a05TZGR4TzVXTDBUQTZ6MlUyZ3k6UEJWNXVhRVlwM09SeTZsRWkyd29aZVNV │
+│ T0dmU2ZCWEFZdG1xNlV4bWcxU2VYdUZWR2xMSnU3dndCVllYY1ljZQ==                     │
+│   Content-Type: application/json                                             │
+│   Authorization: Bearer M2JnN01P...ZQ==                                      │
+│   X-Client-Sdk: coze-coding-dev-sdk-python/0.5.0                             │
+│                                                                              │
+│ Body:                                                                        │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+{                                                                               
+  "dataset": "政策文件_学校_985高校_兰州大学",                                  
+  "data": [                                                                     
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "兰州大学研究生学位论文学术不端行为\n检测及处理办法\n第一章 总
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "1\n兰州大学学术诚信教育方案\n为推动我校学风建设，优化学术诚信
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "兰州大学学术规范及违规处理办法\n第一章 总 则\n第一条为了进一 
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "https://xxgk.lzu.edu.cn/xuefengjianshe/index.html"           
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "兰州大学《学位论文作假行为处理办法》\n实施细则\n第一章 总则\n
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "兰州大学研究生学术道德规范（试行）\n第一章 总 则\n第一条 为进
+    }                                                                           
+  ]                                                                             
+}                                                                               
+
+╭─────────────────────────────── HTTP Response ────────────────────────────────╮
+│ Status: 200 OK                                                               │
+│                                                                              │
+│ Response Headers:                                                            │
+│   Server: volc-dcdn                                                          │
+│   Content-Type: application/json                                             │
+│   Content-Length: 64                                                         │
+│   Connection: keep-alive                                                     │
+│   Date: Thu, 22 Jan 2026 18:13:27 GMT                                        │
+│   Server-Timing: inner; dur=67, cdn-cache;desc=MISS, origin;dur=206,         │
+│ edge;dur=0, tt_agw; dur=11                                                   │
+│   X-Envoy-Response-Flags: -                                                  │
+│   X-Tt-Logid: 20260123021326BDEB6BA2A8A4458BCC12                             │
+│   Strict-Transport-Security: max-age=31536000; includeSubDomains             │
+│   x-tt-trace-host:                                                           │
+│ 01f3289b31d3cc3a3d9d6f6abb9eb2b6f12b88f3e0aa596a83236bab6042a14b990b206932d2 │
+│ dcad27fec4f44343a453ec192855df61ff45806eb57224e5f03864274f251b71b72886fd7f46 │
+│ c574c2adf05a874e207d951ef2d1e92ce19c9392e9                                   │
+│   x-tt-trace-tag: id=5                                                       │
+│   x-tt-trace-id: 00-e6e94a3a0301022c29489773cae70000-e6e94a3a0301022c-01     │
+│   X-TT-TIMESTAMP: 1769105607.007                                             │
+│   via: n111-019-181-168.xycm03-container.Creative                            │
+│   x-request-ip: 115.191.1.199                                                │
+│   x-dsa-trace-id: 176910560643ae300e9ef17d0a4fc64702fc4b926a                 │
+│   X-Dsa-Origin-Status: 200                                                   │
+│                                                                              │
+│ Body:                                                                        │
+╰──────────────────────────────────────────────────────────────────────────────╯
+{                                                                               
+  "code": 250000009,                                                            
+  "msg": "[Coze Knowledge] fetching data failed"                                
+}                                                                               
+
+   [1/1] ❌ 导入失败: [Coze Knowledge] fetching data failed
+
+📁 [13/46] 数据集: 政策文件_学校_985高校_西北农林科技大学
+   文件数: 5
+   ✅ 成功读取 4 个文件
+╭──────────────────────────────── HTTP Request ────────────────────────────────╮
+│ POST https://integration.coze.cn/v1/knowledge_base/batch_import              │
+│                                                                              │
+│ Headers:                                                                     │
+│   x-tt-env: ppe_coze_knowledge                                               │
+│   x-use-ppe: 1                                                               │
+│   x-coze-token: Bearer                                                       │
+│ M2JnN01PN0FZNzN1a05TZGR4TzVXTDBUQTZ6MlUyZ3k6UEJWNXVhRVlwM09SeTZsRWkyd29aZVNV │
+│ T0dmU2ZCWEFZdG1xNlV4bWcxU2VYdUZWR2xMSnU3dndCVllYY1ljZQ==                     │
+│   Content-Type: application/json                                             │
+│   Authorization: Bearer M2JnN01P...ZQ==                                      │
+│   X-Client-Sdk: coze-coding-dev-sdk-python/0.5.0                             │
+│                                                                              │
+│ Body:                                                                        │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+{                                                                               
+  "dataset": "政策文件_学校_985高校_西北农林科技大学",                          
+  "data": [                                                                     
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "西北农林科技大学全日制普通本科生学士学位授予实施细则的补充规 
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "西北农林科技大学学术道德规范\n\n信息索引：ky-2015-0109001\n\n
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "西北农林科技大学 学术道德与科研诚信管理办法\n\n信息索引：ky-2
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "西北农林科技大学全日制普通本科生学士学位授予实施细则\n\n信息 
+    }                                                                           
+  ]                                                                             
+}                                                                               
+
+╭─────────────────────────────── HTTP Response ────────────────────────────────╮
+│ Status: 200 OK                                                               │
+│                                                                              │
+│ Response Headers:                                                            │
+│   Server: volc-dcdn                                                          │
+│   Content-Type: application/json                                             │
+│   Content-Length: 64                                                         │
+│   Connection: keep-alive                                                     │
+│   Date: Thu, 22 Jan 2026 18:13:27 GMT                                        │
+│   Server-Timing: inner; dur=65, cdn-cache;desc=MISS,  origin;dur=201,        │
+│ edge;dur=6,  cdn-cache;desc=MISS, tt_agw; dur=12                             │
+│   X-Envoy-Response-Flags: -                                                  │
+│   X-Tt-Logid: 202601230213276C631D09781CAEB5899A                             │
+│   Strict-Transport-Security: max-age=31536000; includeSubDomains             │
+│   x-tt-trace-host:                                                           │
+│ 01a4ca0a4e544ecb20221369b2de4d0903f25ddfa804bc776220af4077ac57bba2d6fb70ce5e │
+│ 479be3175de61fa34da6b32397b5887ca665028dad720250009ea215bc3fdf06285e459e68f8 │
+│ 6acae29f42940223c8ed4d897a3fdb314263ca4d105671cb2b6ad7a01dd597b63b49e0d8e1   │
+│   x-tt-trace-tag: id=5                                                       │
+│   x-tt-trace-id: 00-e6e94c82030107578e20901b3cc80000-e6e94c8203010757-01     │
+│   X-TT-TIMESTAMP: 1769105607.591                                             │
+│   via: n157-146-226.whmp.Creative,n63-055-042.hbshiyan-mp01-cm.Creative      │
+│   x-request-ip: 115.191.1.199                                                │
+│   x-dsa-trace-id: 176910560764b840cdc7ee997a81a0f8dfecfde87c                 │
+│   X-Dsa-Origin-Status: 200                                                   │
+│                                                                              │
+│ Body:                                                                        │
+╰──────────────────────────────────────────────────────────────────────────────╯
+{                                                                               
+  "code": 250000009,                                                            
+  "msg": "[Coze Knowledge] fetching data failed"                                
+}                                                                               
+
+   [1/1] ❌ 导入失败: [Coze Knowledge] fetching data failed
+
+📁 [14/46] 数据集: 政策文件_学校_985高校_吉林大学
+   文件数: 6
+   ✅ 成功读取 5 个文件
+╭──────────────────────────────── HTTP Request ────────────────────────────────╮
+│ POST https://integration.coze.cn/v1/knowledge_base/batch_import              │
+│                                                                              │
+│ Headers:                                                                     │
+│   x-tt-env: ppe_coze_knowledge                                               │
+│   x-use-ppe: 1                                                               │
+│   x-coze-token: Bearer                                                       │
+│ M2JnN01PN0FZNzN1a05TZGR4TzVXTDBUQTZ6MlUyZ3k6UEJWNXVhRVlwM09SeTZsRWkyd29aZVNV │
+│ T0dmU2ZCWEFZdG1xNlV4bWcxU2VYdUZWR2xMSnU3dndCVllYY1ljZQ==                     │
+│   Content-Type: application/json                                             │
+│   Authorization: Bearer M2JnN01P...ZQ==                                      │
+│   X-Client-Sdk: coze-coding-dev-sdk-python/0.5.0                             │
+│                                                                              │
+│ Body:                                                                        │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+{                                                                               
+  "dataset": "政策文件_学校_985高校_吉林大学",                                  
+  "data": [                                                                     
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "输入关键字...\n首页\n信息公开目录\n信息公开申请表\n首页 首页 
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "输入关键字...\n首页\n信息公开目录\n信息公开申请表\n首页 首页 
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "科技部等二十二部门关于印发《科研失信行为调查处理规则》的\n通 
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "输入关键字...\n首页\n信息公开目录\n信息公开申请表\n首页 首页 
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "https://gongkai.jlu.edu.cn/qd_list.jsp?urltype=tree.TreeTempU
+    }                                                                           
+  ]                                                                             
+}                                                                               
+
+╭─────────────────────────────── HTTP Response ────────────────────────────────╮
+│ Status: 200 OK                                                               │
+│                                                                              │
+│ Response Headers:                                                            │
+│   Server: volc-dcdn                                                          │
+│   Content-Type: application/json                                             │
+│   Content-Length: 64                                                         │
+│   Connection: keep-alive                                                     │
+│   Date: Thu, 22 Jan 2026 18:13:29 GMT                                        │
+│   Server-Timing: inner; dur=73, cdn-cache;desc=MISS, origin;dur=247,         │
+│ edge;dur=0, tt_agw; dur=20                                                   │
+│   X-Envoy-Response-Flags: -                                                  │
+│   X-Tt-Logid: 202601230213294A00621996BB1AE7331F                             │
+│   Strict-Transport-Security: max-age=31536000; includeSubDomains             │
+│   x-tt-trace-host:                                                           │
+│ 01eab4a10d4bb6c828ac3dbe2615dd6891c3d725304b5662ebc0ec696377e98aa257108cce1f │
+│ aa23b83a3187b722ab7aafc2fbd0715644e30ef5bc830f5111616ea345aae99ead27807c090e │
+│ b64d220ef21a70bc63d2aecc69ebd346bc58a91d7b                                   │
+│   x-tt-trace-tag: id=5                                                       │
+│   x-tt-trace-id: 00-e6e954d003010006ac4737e26bfb0000-e6e954d003010006-01     │
+│   X-TT-TIMESTAMP: 1769105609.759                                             │
+│   via: n36-150-033-029.lygcm02-container.Creative                            │
+│   x-request-ip: 101.126.95.49                                                │
+│   x-dsa-trace-id: 1769105609e104607e4226577e7eefb086764e60db                 │
+│   X-Dsa-Origin-Status: 200                                                   │
+│                                                                              │
+│ Body:                                                                        │
+╰──────────────────────────────────────────────────────────────────────────────╯
+{                                                                               
+  "code": 250000009,                                                            
+  "msg": "[Coze Knowledge] fetching data failed"                                
+}                                                                               
+
+   [1/1] ❌ 导入失败: [Coze Knowledge] fetching data failed
+
+📁 [15/46] 数据集: 政策文件_学校_985高校_复旦大学
+   文件数: 4
+   ✅ 成功读取 3 个文件
+╭──────────────────────────────── HTTP Request ────────────────────────────────╮
+│ POST https://integration.coze.cn/v1/knowledge_base/batch_import              │
+│                                                                              │
+│ Headers:                                                                     │
+│   x-tt-env: ppe_coze_knowledge                                               │
+│   x-use-ppe: 1                                                               │
+│   x-coze-token: Bearer                                                       │
+│ M2JnN01PN0FZNzN1a05TZGR4TzVXTDBUQTZ6MlUyZ3k6UEJWNXVhRVlwM09SeTZsRWkyd29aZVNV │
+│ T0dmU2ZCWEFZdG1xNlV4bWcxU2VYdUZWR2xMSnU3dndCVllYY1ljZQ==                     │
+│   Content-Type: application/json                                             │
+│   Authorization: Bearer M2JnN01P...ZQ==                                      │
+│   X-Client-Sdk: coze-coding-dev-sdk-python/0.5.0                             │
+│                                                                              │
+│ Body:                                                                        │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+{                                                                               
+  "dataset": "政策文件_学校_985高校_复旦大学",                                  
+  "data": [                                                                     
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "\n\n\n\n\n\n\n\n\n\n"                                        
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "\n\n\n\n\n\n\n\n\n\n\n\n"                                    
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "https://xxgk.fudan.edu.cn/xsgfzd/list.htm"                   
+    }                                                                           
+  ]                                                                             
+}                                                                               
+
+╭─────────────────────────────── HTTP Response ────────────────────────────────╮
+│ Status: 200 OK                                                               │
+│                                                                              │
+│ Response Headers:                                                            │
+│   Server: volc-dcdn                                                          │
+│   Content-Type: application/json                                             │
+│   Content-Length: 64                                                         │
+│   Connection: keep-alive                                                     │
+│   Date: Thu, 22 Jan 2026 18:13:30 GMT                                        │
+│   Server-Timing: inner; dur=51, cdn-cache;desc=MISS, origin;dur=66,          │
+│ edge;dur=0, tt_agw; dur=7                                                    │
+│   X-Envoy-Response-Flags: -                                                  │
+│   X-Tt-Logid: 20260123021330CBE91888DE1FAE86CBEA                             │
+│   Strict-Transport-Security: max-age=31536000; includeSubDomains             │
+│   x-tt-trace-host:                                                           │
+│ 0177a2686b74cefea358ed6c68d75da381cf6c6403b048b1270ca27cb9accc44bf96a79b7596 │
+│ 47f4a17d917b08a73ef3235220b6fa168a0c9827a5b254e7662fbde1bb4d0f7c54024571ef35 │
+│ 1d760a162e06b4ac5f8be638210062eb0f98521af0                                   │
+│   x-tt-trace-tag: id=5                                                       │
+│   x-tt-trace-id: 00-e6e956c603010bd8f5d300b58c320000-e6e956c603010bd8-01     │
+│   X-TT-TIMESTAMP: 1769105610.088                                             │
+│   via: n120-220-145-055.sdjncm04-container.Creative                          │
+│   x-request-ip: 115.191.1.197                                                │
+│   x-dsa-trace-id: 17691056100a16ca6802ef294dfe0a8039267f3b42                 │
+│   X-Dsa-Origin-Status: 200                                                   │
+│                                                                              │
+│ Body:                                                                        │
+╰──────────────────────────────────────────────────────────────────────────────╯
+{                                                                               
+  "code": 250000009,                                                            
+  "msg": "[Coze Knowledge] fetching data failed"                                
+}                                                                               
+
+   [1/1] ❌ 导入失败: [Coze Knowledge] fetching data failed
+
+📁 [16/46] 数据集: 政策文件_学校_985高校_哈尔滨工业大学
+   文件数: 3
+   ✅ 成功读取 2 个文件
+╭──────────────────────────────── HTTP Request ────────────────────────────────╮
+│ POST https://integration.coze.cn/v1/knowledge_base/batch_import              │
+│                                                                              │
+│ Headers:                                                                     │
+│   x-tt-env: ppe_coze_knowledge                                               │
+│   x-use-ppe: 1                                                               │
+│   x-coze-token: Bearer                                                       │
+│ M2JnN01PN0FZNzN1a05TZGR4TzVXTDBUQTZ6MlUyZ3k6UEJWNXVhRVlwM09SeTZsRWkyd29aZVNV │
+│ T0dmU2ZCWEFZdG1xNlV4bWcxU2VYdUZWR2xMSnU3dndCVllYY1ljZQ==                     │
+│   Content-Type: application/json                                             │
+│   Authorization: Bearer M2JnN01P...ZQ==                                      │
+│   X-Client-Sdk: coze-coding-dev-sdk-python/0.5.0                             │
+│                                                                              │
+│ Body:                                                                        │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+{                                                                               
+  "dataset": "政策文件_学校_985高校_哈尔滨工业大学",                            
+  "data": [                                                                     
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "哈尔滨工业大学学位论文作假行为 \n处理办法实施细则 \n \n校学位
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "https://xxgk.hit.edu.cn/12182/list.htm"                      
+    }                                                                           
+  ]                                                                             
+}                                                                               
+
+╭─────────────────────────────── HTTP Response ────────────────────────────────╮
+│ Status: 200 OK                                                               │
+│                                                                              │
+│ Response Headers:                                                            │
+│   Server: volc-dcdn                                                          │
+│   Content-Type: application/json                                             │
+│   Content-Length: 64                                                         │
+│   Connection: keep-alive                                                     │
+│   Date: Thu, 22 Jan 2026 18:13:30 GMT                                        │
+│   Server-Timing: inner; dur=59, cdn-cache;desc=MISS, origin;dur=109,         │
+│ edge;dur=0, tt_agw; dur=11                                                   │
+│   X-Envoy-Response-Flags: -                                                  │
+│   X-Tt-Logid: 202601230213304632D4213E20AD6FEA96                             │
+│   Strict-Transport-Security: max-age=31536000; includeSubDomains             │
+│   x-tt-trace-host:                                                           │
+│ 0132aa1e6040d3f71cdd0a63559b0bc545daeae07cbc5b02f8809fa1d5fa8fe3ff2aa55f6562 │
+│ 11be8b818a4e476e1a4add19d304a02d52c1f3a17515e030fcf1573f1dc9c2853a6ec4eb3ef4 │
+│ 784d676c12fc067c5869d3c0dd4f7f7dd3ce04fc24                                   │
+│   x-tt-trace-tag: id=5                                                       │
+│   x-tt-trace-id: 00-e6e957a4030104db010214d9b6330000-e6e957a4030104db-01     │
+│   X-TT-TIMESTAMP: 1769105610.342                                             │
+│   via: n36-150-033-038.lygcm02-container.Creative                            │
+│   x-request-ip: 115.190.192.22                                               │
+│   x-dsa-trace-id: 1769105610210d6d49f14ed05083d4e973e72ce354                 │
+│   X-Dsa-Origin-Status: 200                                                   │
+│                                                                              │
+│ Body:                                                                        │
+╰──────────────────────────────────────────────────────────────────────────────╯
+{                                                                               
+  "code": 250000009,                                                            
+  "msg": "[Coze Knowledge] fetching data failed"                                
+}                                                                               
+
+   [1/1] ❌ 导入失败: [Coze Knowledge] fetching data failed
+
+📁 [17/46] 数据集: 政策文件_学校_985高校_重庆大学
+   文件数: 6
+   ✅ 成功读取 6 个文件
+╭──────────────────────────────── HTTP Request ────────────────────────────────╮
+│ POST https://integration.coze.cn/v1/knowledge_base/batch_import              │
+│                                                                              │
+│ Headers:                                                                     │
+│   x-tt-env: ppe_coze_knowledge                                               │
+│   x-use-ppe: 1                                                               │
+│   x-coze-token: Bearer                                                       │
+│ M2JnN01PN0FZNzN1a05TZGR4TzVXTDBUQTZ6MlUyZ3k6UEJWNXVhRVlwM09SeTZsRWkyd29aZVNV │
+│ T0dmU2ZCWEFZdG1xNlV4bWcxU2VYdUZWR2xMSnU3dndCVllYY1ljZQ==                     │
+│   Content-Type: application/json                                             │
+│   Authorization: Bearer M2JnN01P...ZQ==                                      │
+│   X-Client-Sdk: coze-coding-dev-sdk-python/0.5.0                             │
+│                                                                              │
+│ Body:                                                                        │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+{                                                                               
+  "dataset": "政策文件_学校_985高校_重庆大学",                                  
+  "data": [                                                                     
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "网站检索：  全部  \n学风建设信息\n基本信息\n招生考试信息\n财 
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "网站检索：  全部  \n学风建设信息\n基本信息\n招生考试信息\n财 
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "网站检索：  全部  \n学风建设信息\n基本信息\n招生考试信息\n财 
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "网站检索：  全部  \n学风建设信息\n基本信息\n招生考试信息\n财 
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "网站检索：  全部  \n学风建设信息\n基本信息\n招生考试信息\n财 
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "https://gongkai.cqu.edu.cn/xxgkqd/xfjsxx/xsbdxwccjz.htm"     
+    }                                                                           
+  ]                                                                             
+}                                                                               
+
+╭─────────────────────────────── HTTP Response ────────────────────────────────╮
+│ Status: 200 OK                                                               │
+│                                                                              │
+│ Response Headers:                                                            │
+│   Server: volc-dcdn                                                          │
+│   Content-Type: application/json                                             │
+│   Content-Length: 64                                                         │
+│   Connection: keep-alive                                                     │
+│   Date: Thu, 22 Jan 2026 18:13:33 GMT                                        │
+│   Server-Timing: inner; dur=65, cdn-cache;desc=MISS, origin;dur=168,         │
+│ edge;dur=0, tt_agw; dur=17                                                   │
+│   X-Envoy-Response-Flags: -                                                  │
+│   X-Tt-Logid: 202601230213330A6029B168286D7DAE9A                             │
+│   Strict-Transport-Security: max-age=31536000; includeSubDomains             │
+│   x-tt-trace-host:                                                           │
+│ 0121c91df9aa265ee2c9e40d7db60fe00bf211434c35c0d888c83d3aa4d05db534ec73ac27bc │
+│ 816893d7e923708b4239498b351864c714b179456ed5e583a288f424d2aaf5d6e8d7c937d72f │
+│ 4013900c6b2afdb76aac604fe70272ea0aa7f7396a                                   │
+│   x-tt-trace-tag: id=5                                                       │
+│   x-tt-trace-id: 00-e6e9638503010729721a8efbc7e60000-e6e9638503010729-01     │
+│   X-TT-TIMESTAMP: 1769105613.447                                             │
+│   via: n111-019-181-159.xycm03-container.Creative                            │
+│   x-request-ip: 101.126.128.57                                               │
+│   x-dsa-trace-id: 17691056138646dcf50ff81d829ac271f12fd3adc4                 │
+│   X-Dsa-Origin-Status: 200                                                   │
+│                                                                              │
+│ Body:                                                                        │
+╰──────────────────────────────────────────────────────────────────────────────╯
+{                                                                               
+  "code": 250000009,                                                            
+  "msg": "[Coze Knowledge] fetching data failed"                                
+}                                                                               
+
+   [1/1] ❌ 导入失败: [Coze Knowledge] fetching data failed
+
+📁 [18/46] 数据集: 政策文件_学校_985高校_湖南大学
+   文件数: 4
+   ✅ 成功读取 4 个文件
+╭──────────────────────────────── HTTP Request ────────────────────────────────╮
+│ POST https://integration.coze.cn/v1/knowledge_base/batch_import              │
+│                                                                              │
+│ Headers:                                                                     │
+│   x-tt-env: ppe_coze_knowledge                                               │
+│   x-use-ppe: 1                                                               │
+│   x-coze-token: Bearer                                                       │
+│ M2JnN01PN0FZNzN1a05TZGR4TzVXTDBUQTZ6MlUyZ3k6UEJWNXVhRVlwM09SeTZsRWkyd29aZVNV │
+│ T0dmU2ZCWEFZdG1xNlV4bWcxU2VYdUZWR2xMSnU3dndCVllYY1ljZQ==                     │
+│   Content-Type: application/json                                             │
+│   Authorization: Bearer M2JnN01P...ZQ==                                      │
+│   X-Client-Sdk: coze-coding-dev-sdk-python/0.5.0                             │
+│                                                                              │
+│ Body:                                                                        │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+{                                                                               
+  "dataset": "政策文件_学校_985高校_湖南大学",                                  
+  "data": [                                                                     
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "中华人民共和国学位法\n（2024 年4 月 26 日第十四届全国人民代表
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "湖南大学研究生学术道德规范实施细则(研字[2009]6 号) \n发布时间
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "1\n关于印发《湖南大学研究生学位论文检测与\n处理办法》的通知\n
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "https://gra.hnu.edu.cn/xwxk/xgwj.htm"                        
+    }                                                                           
+  ]                                                                             
+}                                                                               
+
+╭─────────────────────────────── HTTP Response ────────────────────────────────╮
+│ Status: 200 OK                                                               │
+│                                                                              │
+│ Response Headers:                                                            │
+│   Server: volc-dcdn                                                          │
+│   Content-Type: application/json                                             │
+│   Content-Length: 64                                                         │
+│   Connection: keep-alive                                                     │
+│   Date: Thu, 22 Jan 2026 18:13:34 GMT                                        │
+│   Server-Timing: inner; dur=55, cdn-cache;desc=MISS, origin;dur=173,         │
+│ edge;dur=0, tt_agw; dur=11                                                   │
+│   X-Envoy-Response-Flags: -                                                  │
+│   X-Tt-Logid: 20260123021334565B6F24C92A9CE94697                             │
+│   Strict-Transport-Security: max-age=31536000; includeSubDomains             │
+│   x-tt-trace-host:                                                           │
+│ 01e8ceb24e79a5140a1988c644decd1ef91c9b913fefd13027b8355d1bfd12d3834fde8f251a │
+│ 5857db59ddaaf203707c06fa729f8661edca876483d421e48324510212844c6cdce4f39a82d8 │
+│ 7a7a2947ac5d73aaea06e9bb5fd9eb8ed15b476bc8                                   │
+│   x-tt-trace-tag: id=5                                                       │
+│   x-tt-trace-id: 00-e6e966c703010135259d397903e40000-e6e966c703010135-01     │
+│   X-TT-TIMESTAMP: 1769105614.282                                             │
+│   via: n111-047-131-037.xycm-container.Creative                              │
+│   x-request-ip: 115.190.218.237                                              │
+│   x-dsa-trace-id: 176910561476efa68a8ebe974f95a74bd6e4f6ee56                 │
+│   X-Dsa-Origin-Status: 200                                                   │
+│                                                                              │
+│ Body:                                                                        │
+╰──────────────────────────────────────────────────────────────────────────────╯
+{                                                                               
+  "code": 250000009,                                                            
+  "msg": "[Coze Knowledge] fetching data failed"                                
+}                                                                               
+
+   [1/1] ❌ 导入失败: [Coze Knowledge] fetching data failed
+
+📁 [19/46] 数据集: 政策文件_学校_985高校_东北大学
+   文件数: 5
+   ✅ 成功读取 4 个文件
+╭──────────────────────────────── HTTP Request ────────────────────────────────╮
+│ POST https://integration.coze.cn/v1/knowledge_base/batch_import              │
+│                                                                              │
+│ Headers:                                                                     │
+│   x-tt-env: ppe_coze_knowledge                                               │
+│   x-use-ppe: 1                                                               │
+│   x-coze-token: Bearer                                                       │
+│ M2JnN01PN0FZNzN1a05TZGR4TzVXTDBUQTZ6MlUyZ3k6UEJWNXVhRVlwM09SeTZsRWkyd29aZVNV │
+│ T0dmU2ZCWEFZdG1xNlV4bWcxU2VYdUZWR2xMSnU3dndCVllYY1ljZQ==                     │
+│   Content-Type: application/json                                             │
+│   Authorization: Bearer M2JnN01P...ZQ==                                      │
+│   X-Client-Sdk: coze-coding-dev-sdk-python/0.5.0                             │
+│                                                                              │
+│ Body:                                                                        │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+{                                                                               
+  "dataset": "政策文件_学校_985高校_东北大学",                                  
+  "data": [                                                                     
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": " \n —1— \n  \n  \n \n \n东大学科字〔2021〕1号 \n \n \n关于印 
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "东北大学关于切实加强和改进学风建设的意见 \n \n党的十七届六中 
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "http://info.neu.edu.cn/3439/list.htm"                        
+    },                                                                          
+    {                                                                           
+      "source": 0,                                                              
+      "raw_data": "— 1 —\n东大学科字〔2017〕1 号\n关于印发《东北大学学术道德规范
+    }                                                                           
+  ]                                                                             
+}                                                                               
+
+╭─────────────────────────────── HTTP Response ────────────────────────────────╮
+│ Status: 200 OK                                                               │
+│                                                                              │
+│ Response Headers:                                                            │
+│   Server: volc-dcdn                                                          │
+│   Content-Type: application/json                                             │
+│   Content-Length: 64                                                         │
+│   Connection: keep-alive                                                     │
+│   Date: Thu, 22 Jan 2026 18:13:35 GMT                                        │
+│   Server-Timing: inner; dur=61, cdn-cache;desc=MISS, origin;dur=106,         │
+│ edge;dur=0, tt_agw; dur=26                                                   │
+│   X-Envoy-Response-Flags: -                                                  │
+│   X-Tt-Logid: 202601230213348EA95F706C19BDD79F2F                             │
+│   Strict-Transport-Security: max-age=31536000; includeSubDomains             │
+│   x-tt-trace-host:                                                           │
+│ 0177a2686b74cefea358ed6c68d75da381eceef4615119dc93ace6b977216aa75ed30e8efaf8 │
+│ 306ff71201bfb36184fa3d1854001de3c9cae00cbfa0e0a944431da68be70af0c0e3f616eb0b │
+│ f792b89ca39ab4f2efd0e7bb55d3f34541aafa5586                                   │
+│   x-tt-trace-tag: id=5                                                       │
+│   x-tt-trace-id: 00-e6e96a1103010d4b1c8c76659c420000-e6e96a1103010d4b-01     │
+│   X-TT-TIMESTAMP: 1769105615.062                                             │
+│   via: n173-198-047.hazhengzhou-cu307-bm.Creative                            │
+│   x-request-ip: 115.191.1.197                                                │
+│   x-dsa-trace-id: 1769105614455fec27cf6b971008bb31f9973ddfe2                 │
+│   X-Dsa-Origin-Status: 200                                                   │
+│                                                                              │
+│ Body:                                                                        │
+╰──────────────────────────────────────────────────────────────────────────────╯
+{                                                                               
+  "code": 250000009,                                                            
+  "msg": "[Coze Knowledge] fetching data failed"                                
+}                                                                               
+
+   [1/1] ❌ 导入失败: [Coze Knowledge] fetching data failed
+
+📁 [20/46] 数据集: 政策文件_学校_985高校_清华大学
+   文件数: 6
