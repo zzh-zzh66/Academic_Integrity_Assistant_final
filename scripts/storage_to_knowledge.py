@@ -186,12 +186,18 @@ class StorageToKnowledgeImporter:
             # 构建文档列表
             documents = []
             for file_path in files_to_import:
-                # 构建 S3 URI
-                s3_uri = f"s3://{self.bucket_name}/{file_path}"
-                documents.append(KnowledgeDocument(
-                    source=DataSourceType.URI,
-                    uri=s3_uri
-                ))
+                try:
+                    # 生成签名 URL（有效期 1 小时）
+                    signed_url = self.storage.generate_presigned_url(
+                        key=file_path,
+                        expire_time=3600
+                    )
+                    documents.append(KnowledgeDocument(
+                        source=DataSourceType.URL,  # 使用 URL 类型
+                        url=signed_url  # 使用签名 URL
+                    ))
+                except Exception as e:
+                    print(f"  ⚠️  生成签名 URL 失败: {file_path}, 错误: {e}")
 
             # 导入到知识库
             try:
