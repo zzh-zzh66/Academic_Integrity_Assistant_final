@@ -45,9 +45,6 @@ class AssetsToKnowledgeImporter:
         '.docx',  # Word 文档（仅支持 .docx，不支持旧版 .doc）
     }
 
-    # 排除的文件前缀（临时文件等）
-    EXCLUDED_PREFIXES = {'~$', '.~', '._'}
-
     def __init__(self):
         """初始化导入器"""
         self.knowledge_client = KnowledgeClient(config=Config())
@@ -87,7 +84,7 @@ class AssetsToKnowledgeImporter:
             assets_dir: assets 目录路径
 
         Returns:
-            数据集名称（仅包含 ASCII 字符）
+            数据集名称
         """
         # 计算相对路径
         rel_path = os.path.relpath(file_path, assets_dir)
@@ -95,27 +92,12 @@ class AssetsToKnowledgeImporter:
         # 移除文件名，只保留目录
         parts = rel_path.split('/')[:-1]
 
-        # 将目录名中的中文字符转换为拼音，或使用默认值
-        # 简化方案：将所有非 ASCII 字符替换为下划线
-        dataset_name = '_'.join(parts)
-
-        # 清理名称：只保留字母、数字、下划线和连字符
-        import re
-        dataset_name = re.sub(r'[^a-zA-Z0-9_-]', '_', dataset_name)
-
-        # 移除连续的下划线
-        dataset_name = re.sub(r'_+', '_', dataset_name)
-
-        # 移除首尾的下划线和连字符
-        dataset_name = dataset_name.strip('_-')
+        # 将目录名中的特殊字符替换为下划线
+        dataset_name = '_'.join(parts).replace('-', '_').replace('.', '_')
 
         # 如果为空，使用默认名称
-        if not dataset_name:
+        if not dataset_name or dataset_name == '.':
             dataset_name = 'coze_doc_knowledge'
-
-        # 限制名称长度（有些系统可能有限制）
-        if len(dataset_name) > 50:
-            dataset_name = dataset_name[:50]
 
         return dataset_name
 
@@ -142,30 +124,10 @@ class AssetsToKnowledgeImporter:
                 print(f"  ⚠️  文件内容过短: {len(content) if content else 0} 字符")
                 return None
 
-            # 检查是否包含错误信息（更全面的检测）
-            error_markers = [
-                '[解析失败]', '[FileOps Error]', 'File is not a zip file',
-                'fetching data failed', 'Coze Knowledge',
-                'Failed to read document', 'Unsupported file format'
-            ]
-            content_lower = content.lower()
-            if any(marker.lower() in content_lower for marker in error_markers):
-                print(f"  ⚠️  文件包含错误信息")
-                print(f"     错误内容预览: {content[:150]}...")
-                return None
-
-            # 检查是否为纯空白字符
-            if not content.strip():
-                print(f"  ⚠️  文件内容为空白")
-                return None
-
-            # 检查内容是否主要为特殊字符（可能是乱码）
-            import re
-            # 统计中文字符、英文字符和数字的数量
-            text_chars = len(re.findall(r'[\u4e00-\u9fa5a-zA-Z0-9\s]', content))
-            if text_chars / len(content) < 0.3:
-                print(f"  ⚠️  文件内容异常（可能为乱码）")
-                print(f"     有效字符比例: {text_chars/len(content):.2%}")
+            # 检查是否包含错误信息
+            error_markers = ['[解析失败]', '[FileOps Error]', 'File is not a zip file']
+            if any(marker in content for marker in error_markers):
+                print(f"  ⚠️  文件包含错误信息: {content[:100]}")
                 return None
 
             return content
@@ -191,20 +153,12 @@ class AssetsToKnowledgeImporter:
 
         files = []
         skipped_doc_files = []
-        skipped_temp_files = []
         assets_path = Path(assets_dir)
 
         # 递归遍历目录
         for file_path in assets_path.rglob("*"):
             if file_path.is_file():
-                file_name = file_path.name
                 ext = file_path.suffix.lower()
-
-                # 检查是否为临时文件
-                if any(file_name.startswith(prefix) for prefix in self.EXCLUDED_PREFIXES):
-                    skipped_temp_files.append(str(file_path))
-                    continue
-
                 if ext in self.SUPPORTED_EXTENSIONS:
                     files.append(str(file_path))
                 elif ext == '.doc':
@@ -222,16 +176,6 @@ class AssetsToKnowledgeImporter:
                 for f in skipped_doc_files[:3]:
                     print(f"     - {os.path.basename(f)}")
                 print(f"     ... 还有 {len(skipped_doc_files) - 3} 个文件")
-
-        if skipped_temp_files:
-            print(f"⚠️  跳过 {len(skipped_temp_files)} 个临时文件")
-            if len(skipped_temp_files) <= 5:
-                for f in skipped_temp_files:
-                    print(f"     - {os.path.basename(f)}")
-            else:
-                for f in skipped_temp_files[:3]:
-                    print(f"     - {os.path.basename(f)}")
-                print(f"     ... 还有 {len(skipped_temp_files) - 3} 个文件")
 
         print()
         return files
@@ -319,8 +263,8 @@ class AssetsToKnowledgeImporter:
                 print(f"     失败文件数: {len(failed_files)}")
                 continue
 
-            # 分批导入（每批最多 10 个文件，便于调试）
-            batch_size = 10
+            # 分批导入（每批最多 50 个文件）
+            batch_size = 50
             total_batches = (len(documents) + batch_size - 1) // batch_size
 
             for batch_idx in range(0, len(documents), batch_size):
@@ -331,12 +275,6 @@ class AssetsToKnowledgeImporter:
                 # 导入到知识库
                 try:
                     print(f"  📤 正在导入第 {batch_num}/{total_batches} 批 ({len(batch_docs)} 个文件)...")
-
-                    # 调试：打印第一个文档的前 200 字符
-                    if batch_docs and batch_docs[0].raw_data:
-                        preview = batch_docs[0].raw_data[:200].replace('\n', ' ')
-                        print(f"  🔍 调试信息 - 第一个文档内容预览: {preview}...")
-
                     response = self.knowledge_client.add_documents(
                         documents=batch_docs,
                         table_name=dataset_name
@@ -351,15 +289,7 @@ class AssetsToKnowledgeImporter:
                             self.imported_files[dataset_name] = set()
                         self.imported_files[dataset_name].update(batch_files)
                     else:
-                        print(f"  ❌ 批次 {batch_num} 导入失败")
-                        print(f"     错误代码: {response.code}")
-                        print(f"     错误信息: {response.msg}")
-
-                        # 打印失败批次中的文件列表
-                        print(f"     失败文件列表:")
-                        for f in batch_files:
-                            print(f"       - {f}")
-
+                        print(f"  ❌ 批次 {batch_num} 导入失败: {response.msg}")
                         fail_count += len(batch_docs)
 
                 except Exception as e:
@@ -424,11 +354,6 @@ def main():
         action="store_true",
         help="仅列出文件，不执行导入"
     )
-    parser.add_argument(
-        "--test-mode",
-        action="store_true",
-        help="测试模式：仅导入第一个文件用于调试"
-    )
 
     args = parser.parse_args()
 
@@ -440,11 +365,6 @@ def main():
     if not files:
         print("❌ 未找到任何文件")
         sys.exit(1)
-
-    # 测试模式：只导入第一个文件
-    if args.test_mode:
-        print("\n🧪 测试模式：仅导入第一个文件")
-        files = files[:1]
 
     # 仅列出模式
     if args.list_only:
