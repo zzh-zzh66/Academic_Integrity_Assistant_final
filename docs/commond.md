@@ -40,3 +40,22 @@ python scripts/github_to_storage.py \
 - `7.《哲学社会科学科研诚信建设实施办法》（社科办字〔2019〕10号） (1).pdf`
 
 将文件名中的 `(` 改为 `（`，`)` 改为 `）` 后再运行脚本。
+
+
+
+导入记录
+记录文件：scripts/knowledge_import_record.json
+记录格式：按数据集分组存储已导入文件路径
+用途：实现增量更新，避免重复导入
+命令如下：
+python scripts/storage_to_knowledge.py \
+    --prefix coze_knowledge_origin/test
+
+
+python scripts/storage_to_knowledge.py \
+    --prefix coze_knowledge_origin/test \
+    --list-only
+
+python scripts/storage_to_knowledge.py \
+    --prefix coze_knowledge_origin/test \
+    --force-import

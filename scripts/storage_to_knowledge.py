@@ -27,7 +27,8 @@ project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 from coze_coding_dev_sdk.s3 import S3SyncStorage
-from coze_coding_dev_sdk import KnowledgeClient, Config, KnowledgeDocument, DataSourceType
+from coze_coding_dev_sdk import KnowledgeClient, Config
+from coze_coding_dev_sdk.knowledge import KnowledgeDocument, DataSourceType
 
 
 class StorageToKnowledgeImporter:
