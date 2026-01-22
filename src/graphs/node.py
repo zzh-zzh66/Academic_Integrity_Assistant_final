@@ -6,7 +6,8 @@ from jinja2 import Template
 from langchain_core.runnables import RunnableConfig
 from langgraph.runtime import Runtime
 from coze_coding_utils.runtime_ctx.context import Context
-from coze_coding_dev_sdk import LLMClient, KnowledgeClient
+from coze_coding_dev_sdk import LLMClient, KnowledgeClient, KnowledgeDocument, ChunkConfig
+from utils.file.file import FileOps
 
 from graphs.state import (
     IntentRecognitionInput,
@@ -14,7 +15,13 @@ from graphs.state import (
     KnowledgeRetrievalInput,
     KnowledgeRetrievalOutput,
     ResponseGenerationInput,
-    ResponseGenerationOutput
+    ResponseGenerationOutput,
+    QueryTypeInput,
+    QueryTypeOutput,
+    DocumentImportInput,
+    DocumentImportOutput,
+    DocumentImportResponseInput,
+    DocumentImportResponseOutput
 )
 
 
@@ -227,3 +234,134 @@ def response_generation_node(
         return ResponseGenerationOutput(
             formatted_response=fallback_response
         )
+
+
+def query_type_node(
+    state: QueryTypeInput,
+    config: RunnableConfig,
+    runtime: Runtime[Context]
+) -> QueryTypeOutput:
+    """
+    title: 查询类型判断
+    desc: 判断用户是进行查询还是上传文档
+    """
+    ctx = runtime.context
+    
+    # 判断逻辑：如果有上传文件，则为upload类型；否则为query类型
+    if state.document_file is not None:
+        return QueryTypeOutput(query_type="upload")
+    else:
+        return QueryTypeOutput(query_type="query")
+
+
+def document_import_node(
+    state: DocumentImportInput,
+    config: RunnableConfig,
+    runtime: Runtime[Context]
+) -> DocumentImportOutput:
+    """
+    title: 文档导入
+    desc: 将用户上传的文档导入到知识库中
+    integrations: 知识库
+    """
+    ctx = runtime.context
+    
+    try:
+        # 检查文件是否存在
+        if state.document_file is None:
+            return DocumentImportOutput(
+                import_success=False,
+                import_message="未找到上传的文件",
+                document_count=0
+            )
+        
+        # 读取文件内容
+        file_content = FileOps.extract_text(state.document_file)
+        
+        if not file_content or len(file_content.strip()) == 0:
+            return DocumentImportOutput(
+                import_success=False,
+                import_message="文件内容为空，无法导入",
+                document_count=0
+            )
+        
+        # 初始化知识库客户端
+        kb_client = KnowledgeClient(ctx=ctx)
+        
+        # 创建文档对象
+        doc = KnowledgeDocument(
+            source=0,  # 0 表示 TEXT 类型
+            raw_data=file_content
+        )
+        
+        # 配置分块参数
+        chunk_config = ChunkConfig(
+            separator="\n\n",
+            max_tokens=1500,
+            remove_extra_spaces=True
+        )
+        
+        # 导入文档到知识库
+        response = kb_client.add_documents(
+            documents=[doc],
+            table_name="coze_doc_knowledge",
+            chunk_config=chunk_config
+        )
+        
+        if response.code == 0:
+            doc_count = len(response.doc_ids) if response.doc_ids else 1
+            return DocumentImportOutput(
+                import_success=True,
+                import_message=f"文档导入成功！已导入 {doc_count} 个文档片段到知识库。",
+                document_count=doc_count
+            )
+        else:
+            return DocumentImportOutput(
+                import_success=False,
+                import_message=f"文档导入失败：{response.msg}",
+                document_count=0
+            )
+        
+    except Exception as e:
+        return DocumentImportOutput(
+            import_success=False,
+            import_message=f"文档导入过程中发生错误：{str(e)}",
+            document_count=0
+        )
+
+
+def document_import_response_node(
+    state: DocumentImportResponseInput,
+    config: RunnableConfig,
+    runtime: Runtime[Context]
+) -> DocumentImportResponseOutput:
+    """
+    title: 文档导入响应
+    desc: 生成文档导入的格式化响应
+    """
+    ctx = runtime.context
+    
+    if state.import_success:
+        response = f"""文档导入成功！✓
+
+导入详情：
+- 导入状态：成功
+- 文档片段数量：{state.document_count}
+- 消息：{state.import_message}
+
+现在您可以向知识库提问了！例如："学术不端有哪些类型？"
+"""
+    else:
+        response = f"""文档导入失败 ✗
+
+导入详情：
+- 导入状态：失败
+- 错误信息：{state.import_message}
+
+请检查文件格式是否正确（支持TXT、PDF、DOCX等），或稍后重试。"""
+    
+    return DocumentImportResponseOutput(
+        formatted_response=response
+    )
+
+
