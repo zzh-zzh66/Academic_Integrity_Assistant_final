@@ -67,7 +67,7 @@ class StorageUploader:
             print(f"  📤 上传中: {target_key}")
             key = self.storage.stream_upload_file(
                 fileobj=open(local_path, 'rb'),
-                file_name=os.path.basename(local_path),
+                file_name=target_key,  # 使用完整的 target_key（包含目录路径）
                 content_type=self._get_content_type(local_path),
                 bucket=None,
             )
