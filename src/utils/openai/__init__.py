@@ -1,5 +1,17 @@
-"""OpenAI Chat Completions API 兼容层"""
+"""
+OpenAI module - OpenAI集成模块（已迁移到integrations/）
 
-from utils.openai.handler import OpenAIChatHandler
+为了向后兼容，这里从integrations/重新导出。
+"""
 
-__all__ = ["OpenAIChatHandler"]
+from ..integrations.handler import OpenAIChatHandler
+from ..integrations.converter.request_converter import RequestConverter
+from ..integrations.converter.response_converter import ResponseConverter
+from ..integrations.types.request import *
+from ..integrations.types.response import *
+
+__all__ = [
+    "OpenAIChatHandler",
+    "RequestConverter",
+    "ResponseConverter",
+]
