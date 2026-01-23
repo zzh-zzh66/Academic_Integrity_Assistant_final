@@ -60,9 +60,9 @@ def intent_recognition_node(
         response = client.invoke(
             messages=messages,
             model=llm_config.get("model", "doubao-seed-1-8-251228"),
-            temperature=llm_config.get("temperature", 0.1),
+            temperature=llm_config.get("temperature", 0.0),
             top_p=llm_config.get("top_p", 0.9),
-            max_completion_tokens=llm_config.get("max_completion_tokens", 2000),
+            max_completion_tokens=llm_config.get("max_completion_tokens", 1500),
             thinking=llm_config.get("thinking", "disabled")
         )
         
@@ -77,31 +77,59 @@ def intent_recognition_node(
                 elif isinstance(item, str):
                     response_text += item
         
-        # 解析JSON响应
-        result = {
-            "intent_type": "咨询类",
-            "extracted_keywords": [],
-            "behavior_analysis": None
-        }
+        response_text = response_text.strip()
         
-        # 尝试提取JSON内容
-        json_match = re.search(r'\{[^{}]*\}', response_text)
-        if json_match:
-            try:
-                parsed_result = json.loads(json_match.group())
-                if "intent_type" in parsed_result:
-                    result["intent_type"] = parsed_result["intent_type"]
-                if "extracted_keywords" in parsed_result:
-                    result["extracted_keywords"] = parsed_result["extracted_keywords"]
-                if "behavior_analysis" in parsed_result:
-                    result["behavior_analysis"] = parsed_result["behavior_analysis"]
-            except json.JSONDecodeError:
-                pass
+        # 解析响应（使用直接文本匹配，而不是JSON解析）
+        intent_type = "咨询类"  # 默认值
+        extracted_keywords = []
+        behavior_analysis = None
+        
+        # 解析意图类型
+        lines = response_text.split('\n')
+        for line in lines:
+            line = line.strip()
+            
+            # 解析意图类型
+            if line.startswith("意图类型："):
+                type_text = line.replace("意图类型：", "").strip()
+                if "行为判断" in type_text or "判断" in type_text:
+                    intent_type = "行为判断类"
+                elif "混合" in type_text:
+                    intent_type = "混合类"
+                else:
+                    intent_type = "咨询类"
+            
+            # 解析关键词
+            elif line.startswith("关键词："):
+                keywords_text = line.replace("关键词：", "").strip()
+                if keywords_text:
+                    # 按逗号分隔关键词
+                    extracted_keywords = [kw.strip() for kw in keywords_text.split(",") if kw.strip()]
+            
+            # 解析行为分析
+            elif line.startswith("主体："):
+                if behavior_analysis is None:
+                    behavior_analysis = {"主体": "", "动作": "", "对象": ""}
+                behavior_analysis["主体"] = line.replace("主体：", "").strip()
+            elif line.startswith("动作："):
+                if behavior_analysis is None:
+                    behavior_analysis = {"主体": "", "动作": "", "对象": ""}
+                behavior_analysis["动作"] = line.replace("动作：", "").strip()
+            elif line.startswith("对象："):
+                if behavior_analysis is None:
+                    behavior_analysis = {"主体": "", "动作": "", "对象": ""}
+                behavior_analysis["对象"] = line.replace("对象：", "").strip()
+        
+        # 如果没有成功解析，使用关键词匹配进行辅助判断
+        if intent_type == "咨询类" and len(extracted_keywords) == 0:
+            query_lower = state.user_query.lower()
+            if any(word in query_lower for word in ["是否", "违规", "合规", "允许", "可以吗", "违法", "违反"]):
+                intent_type = "行为判断类"
         
         return IntentRecognitionOutput(
-            intent_type=result["intent_type"],
-            extracted_keywords=result["extracted_keywords"],
-            behavior_analysis=result["behavior_analysis"]
+            intent_type=intent_type,
+            extracted_keywords=extracted_keywords,
+            behavior_analysis=behavior_analysis
         )
         
     except Exception as e:
