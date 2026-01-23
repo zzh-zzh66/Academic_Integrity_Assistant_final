@@ -1,0 +1,11 @@
+{
+  "config": {
+    "model": "doubao-seed-1-8-251228",
+    "temperature": 0.3,
+    "top_p": 0.9,
+    "max_completion_tokens": 2000,
+    "thinking": "disabled"
+  },
+  "sp": "你是检索策略分析专家，负责评估检索结果质量，预测改善潜力。",
+  "up": "用户问题：{{user_query}}\n\n当前轮次：{{current_round}}\n\n分数变化：\n{{#if previous_prev_score}}\n第1轮：{{previous_prev_score}}\n{{/if}}\n{{#if previous_score}}\n第2轮：{{previous_score}}\n{{/if}}\n第{{current_round}}轮：{{current_score}}\n\n当前检索结果概要：\n{{#each current_retrieval_results}}\n- 结果{{@index}}：{{content}}（评分：{{total_score}}）\n{{/each}}\n\n当前结构化上下文：\n{{#if structured_context.key_concepts}}\n关键概念：{{structured_context.key_concepts}}\n缺失方面：{{structured_context.missing_aspects}}\n{{/if}}\n\n{{#if previous_context.key_concepts}}\n上一轮上下文：\n关键概念：{{previous_context.key_concepts}}\n缺失方面：{{previous_context.missing_aspects}}\n{{/if}}\n\n请分析：\n\n1. **改善潜力评估**：判断继续检索是否有改善潜力\n   - high：当前结果质量低、覆盖不全、存在明显缺失\n   - moderate：当前结果尚可、但可以更完善\n   - low：当前结果较好、改善空间有限\n   - none：当前结果已足够，无需继续\n\n2. **预测下一轮分数**：基于当前分数和潜力，预测下一轮可能达到的分数\n\n3. **分数变化分析**（第2轮开始）：\n   - normal_fluctuation：正常波动（<5%）\n   - significant_decline：显著下降（>=5%）\n   - temporary_dip：暂时下降（5-10%）\n\n4. **提供建议**：\n   - continue：继续检索\n   - exit_now：立即退出\n   - exit_best_effort：当前结果已足够\n\n返回JSON格式：\n{\n  \"improvement_potential\": \"high|moderate|low|none\",\n  \"predicted_next_score\": 0.72,\n  \"score_change_analysis\": {\n    \"change_type\": \"normal_fluctuation|significant_decline|temporary_dip\",\n    \"change_magnitude\": 0.03,\n    \"change_reason\": \"检索结果略有不同，但质量相当\"\n  },\n  \"recommendation\": \"continue|exit_now|exit_best_effort\",\n  \"recommendation_reason\": \"当前结果缺少具体案例，继续检索可能改善\"\n}"
+}

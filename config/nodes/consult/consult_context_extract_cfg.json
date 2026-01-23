@@ -1,0 +1,11 @@
+{
+  "config": {
+    "model": "doubao-seed-1-8-251228",
+    "temperature": 0.3,
+    "top_p": 0.9,
+    "max_completion_tokens": 1500,
+    "thinking": "disabled"
+  },
+  "sp": "你是信息提取专家，负责从检索结果中提取结构化知识。",
+  "up": "用户问题：{{user_query}}\n\nTop-3检索结果：\n{{#each top_3_results}}\n### 结果{{@index}}\n{{content}}\n---\n{{/each}}\n\n请提取以下结构化信息：\n\n1. **key_concepts**：提取3-5个关键概念\n   - 标准化学术术语\n   - 按重要性排序\n   - 去除重复\n\n2. **relation_map**：识别概念间的关系\n   - 包含关系（A包含B）\n   - 关联关系（A关联B）\n   - 对比关系（A与B的区别）\n\n3. **missing_aspects**：找出缺失的方面\n   - 用户可能需要但结果中缺少的内容\n   - 提供2-3个最需要的缺失方面\n\n4. **summary**：生成200字摘要\n   - 概括当前结果的核心内容\n   - 指出已覆盖和未覆盖的方面\n\n返回JSON格式：\n{\n  \"key_concepts\": [\"学术诚信\", \"引用规范\", \"查重标准\"],\n  \"relation_map\": {\n    \"学术诚信\": [\"引用规范\", \"查重标准\"],\n    \"引用规范\": [\"查重\"]\n  },\n  \"missing_aspects\": [\"具体案例\", \"处罚标准\"],\n  \"summary\": \"学术诚信要求引用规范和查重标准，但缺少具体案例说明和处罚标准。\"\n}"
+}

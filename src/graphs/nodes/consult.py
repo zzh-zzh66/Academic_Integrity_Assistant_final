@@ -20,7 +20,19 @@ from graphs.state import (
     ConsultRetrievalLoopStartInput,
     ConsultRetrievalLoopStartOutput,
     ConsultRetrievalLoopEndInput,
-    ConsultRetrievalLoopEndOutput
+    ConsultRetrievalLoopEndOutput,
+    ComplexityInput,
+    ComplexityOutput,
+    ConsultQueryOptimizeInput,
+    ConsultQueryOptimizeOutput,
+    RerankInput,
+    RerankOutput,
+    ContextExtractInput,
+    ContextExtractOutput,
+    ImprovementAnalysisInput,
+    ImprovementAnalysisOutput,
+    ConsultRetrievalLoopNodeInput,
+    ConsultRetrievalLoopNodeOutput
 )
 from graphs.nodes.common import (
     extract_file_name_from_content,
@@ -327,65 +339,6 @@ def consult_rerank_node(
         )
 
 
-# ==================== 咨询类循环检索节点（调用子图）====================
-
-def consult_retrieval_loop_node(
-    state: ConsultRetrievalInput,
-    config: RunnableConfig,
-    runtime: Runtime[Context]
-) -> ConsultRetrievalOutput:
-    """
-    title: 咨询类循环检索（调用子图）
-    desc: 通过调用子图实现咨询类的循环检索逻辑
-    integrations: 知识库, 大语言模型
-    """
-    # 导入子图
-    from graphs.loop_graph import consult_retrieval_subgraph
-    
-    # 1. 将父图状态转换为子图状态
-    subgraph_state = ConsultRetrievalLoopState(
-        user_query=state.user_query,
-        refined_query=state.refined_query,
-        refined_keywords=state.refined_keywords,
-        consult_focus=getattr(state, 'consult_focus', ''),
-        max_rounds=2,  # 最大轮次
-        target_score=0.8,  # 目标分数
-        min_score_threshold=0.65,  # 最低阈值
-        current_round=0,
-        previous_score=0.0,
-        current_score=0.0,
-        retrieval_results=[],
-        high_score_chunks=[],
-        exit_reason="",
-        previous_retrieval_results=[]
-    )
-    
-    # 2. 调用子图
-    # 动态导入子图，避免编译时循环检测
-    from graphs.loop_graph import create_consult_retrieval_subgraph
-    subgraph = create_consult_retrieval_subgraph()
-    subgraph_result_dict = subgraph.invoke(subgraph_state.model_dump())  # type: ignore[attribute-error]
-
-    # 3. 判断是否需要兜底回答
-    final_results = subgraph_result_dict.get("retrieval_results", [])
-
-    # 如果退出原因是 fallback 或 score_decreased，可能需要特殊处理
-    exit_reason = subgraph_result_dict.get("exit_reason", "")
-    if exit_reason == "fallback":
-        # 分数太低，使用空结果
-        final_results = []
-    elif exit_reason == "score_decreased":
-        # 分数下降，使用上一轮结果
-        previous_results = subgraph_result_dict.get("previous_retrieval_results", [])
-        if previous_results:
-            final_results = previous_results
-    
-    # 4. 将子图输出转换回父图状态
-    return ConsultRetrievalOutput(
-        retrieval_results=final_results
-    )
-
-
 # ==================== 咨询类循环检索节点（旧版本，已弃用）====================
 
 def consult_retrieval_loop_start_node(
@@ -470,3 +423,536 @@ def consult_retrieval_loop_end_node(
         is_fallback=is_fallback,
         fallback_message=fallback_message
     )
+
+
+# ==================== 查询复杂度判断节点 ====================
+
+def complexity_node(
+    state: ComplexityInput,
+    config: RunnableConfig,
+    runtime: Runtime[Context]
+) -> ComplexityOutput:
+    """
+    title: 查询复杂度判断
+    desc: 判断用户查询的复杂程度（simple/standard/complex），为后续检索策略提供依据
+    integrations: 大语言模型
+    """
+    ctx = runtime.context
+    
+    # 读取配置文件
+    cfg_file = os.path.join(os.getenv("COZE_WORKSPACE_PATH"), config['metadata']['llm_cfg'])
+    with open(cfg_file, 'r', encoding='utf-8') as fd:
+        _cfg = json.load(fd)
+    
+    llm_config = _cfg.get("config", {})
+    sp = _cfg.get("sp", "")
+    up_tpl = Template(_cfg.get("up", ""))
+    
+    # 渲染用户提示词
+    user_prompt_content = up_tpl.render({"user_query": state.user_query})
+    
+    # 调用大语言模型
+    client = LLMClient(ctx=ctx)
+    
+    messages = [
+        {"role": "system", "content": sp},
+        {"role": "user", "content": user_prompt_content}
+    ]
+    
+    try:
+        response = client.invoke(
+            messages=messages,
+            model=llm_config.get("model", "doubao-seed-1-8-251228"),
+            temperature=llm_config.get("temperature", 0.3),
+            top_p=llm_config.get("top_p", 0.9),
+            max_completion_tokens=llm_config.get("max_completion_tokens", 500),
+            thinking=llm_config.get("thinking", "disabled")
+        )
+        
+        # 提取响应内容
+        response_text = ""
+        if isinstance(response.content, str):
+            response_text = response.content
+        elif isinstance(response.content, list):
+            for item in response.content:
+                if isinstance(item, dict) and item.get("type") == "text":
+                    response_text += item.get("text", "")
+                elif isinstance(item, str):
+                    response_text += item
+        
+        response_text = response_text.strip()
+        
+        # 解析JSON响应
+        result = {
+            "query_complexity": "standard",
+            "complexity_reason": "默认标准复杂度"
+        }
+        
+        # 尝试提取JSON内容
+        json_match = re.search(r'\{[^{}]*\}', response_text)
+        if json_match:
+            try:
+                parsed_result = json.loads(json_match.group())
+                if "query_complexity" in parsed_result:
+                    result["query_complexity"] = parsed_result["query_complexity"]
+                if "complexity_reason" in parsed_result:
+                    result["complexity_reason"] = parsed_result["complexity_reason"]
+            except json.JSONDecodeError:
+                pass
+        
+        return ComplexityOutput(
+            query_complexity=result["query_complexity"],
+            complexity_reason=result["complexity_reason"]
+        )
+        
+    except Exception as e:
+        # 发生错误时返回默认值
+        return ComplexityOutput(
+            query_complexity="standard",
+            complexity_reason="默认标准复杂度"
+        )
+
+
+# ==================== 咨询查询优化节点 ====================
+
+def consult_query_optimize_node(
+    state: ConsultQueryOptimizeInput,
+    config: RunnableConfig,
+    runtime: Runtime[Context]
+) -> ConsultQueryOptimizeOutput:
+    """
+    title: 咨询查询优化
+    desc: 根据查询复杂度动态调整检索策略，优化查询语句和关键词
+    integrations: 大语言模型
+    """
+    ctx = runtime.context
+    
+    # 读取配置文件
+    cfg_file = os.path.join(os.getenv("COZE_WORKSPACE_PATH"), config['metadata']['llm_cfg'])
+    with open(cfg_file, 'r', encoding='utf-8') as fd:
+        _cfg = json.load(fd)
+    
+    llm_config = _cfg.get("config", {})
+    sp = _cfg.get("sp", "")
+    up_tpl = Template(_cfg.get("up", ""))
+    
+    # 渲染用户提示词
+    user_prompt_content = up_tpl.render({
+        "user_query": state.user_query,
+        "query_complexity": state.query_complexity,
+        "refined_query": state.refined_query,
+        "refined_keywords": state.refined_keywords,
+        "consult_focus": state.consult_focus,
+        "standard_terms": state.standard_terms,
+        "expanded_terms": state.expanded_terms
+    })
+    
+    # 调用大语言模型
+    client = LLMClient(ctx=ctx)
+    
+    messages = [
+        {"role": "system", "content": sp},
+        {"role": "user", "content": user_prompt_content}
+    ]
+    
+    try:
+        response = client.invoke(
+            messages=messages,
+            model=llm_config.get("model", "doubao-seed-1-8-251228"),
+            temperature=llm_config.get("temperature", 0.3),
+            top_p=llm_config.get("top_p", 0.9),
+            max_completion_tokens=llm_config.get("max_completion_tokens", 1000),
+            thinking=llm_config.get("thinking", "disabled")
+        )
+        
+        # 提取响应内容
+        response_text = ""
+        if isinstance(response.content, str):
+            response_text = response.content
+        elif isinstance(response.content, list):
+            for item in response.content:
+                if isinstance(item, dict) and item.get("type") == "text":
+                    response_text += item.get("text", "")
+                elif isinstance(item, str):
+                    response_text += item
+        
+        response_text = response_text.strip()
+        
+        # 解析JSON响应
+        result = {
+            "optimized_query": state.refined_query if state.refined_query else state.user_query,
+            "optimized_keywords": state.refined_keywords if state.refined_keywords else state.extracted_keywords if hasattr(state, 'extracted_keywords') else [],
+            "retrieval_strategy": {
+                "top_k": 15,
+                "min_score": 0.3,
+                "max_rounds": 2,
+                "target_score": 0.8,
+                "min_score_threshold": 0.65
+            },
+            "optimization_reason": "默认优化策略"
+        }
+        
+        # 尝试提取JSON内容
+        json_match = re.search(r'\{[^{}]*\}', response_text)
+        if json_match:
+            try:
+                parsed_result = json.loads(json_match.group())
+                if "optimized_query" in parsed_result:
+                    result["optimized_query"] = parsed_result["optimized_query"]
+                if "optimized_keywords" in parsed_result:
+                    result["optimized_keywords"] = parsed_result["optimized_keywords"]
+                if "retrieval_strategy" in parsed_result:
+                    result["retrieval_strategy"] = parsed_result["retrieval_strategy"]
+                if "optimization_reason" in parsed_result:
+                    result["optimization_reason"] = parsed_result["optimization_reason"]
+            except json.JSONDecodeError:
+                pass
+        
+        return ConsultQueryOptimizeOutput(
+            optimized_query=result["optimized_query"],
+            optimized_keywords=result["optimized_keywords"],
+            retrieval_strategy=result["retrieval_strategy"],
+            optimization_reason=result["optimization_reason"]
+        )
+        
+    except Exception as e:
+        # 发生错误时返回默认值
+        return ConsultQueryOptimizeOutput(
+            optimized_query=state.refined_query if state.refined_query else state.user_query,
+            optimized_keywords=state.refined_keywords if state.refined_keywords else state.extracted_keywords if hasattr(state, 'extracted_keywords') else [],
+            retrieval_strategy={
+                "top_k": 15,
+                "min_score": 0.3,
+                "max_rounds": 2,
+                "target_score": 0.8,
+                "min_score_threshold": 0.65
+            },
+            optimization_reason="默认优化策略"
+        )
+
+
+# ==================== 重排序节点（新版本） ====================
+
+def rerank_node(
+    state: RerankInput,
+    config: RunnableConfig,
+    runtime: Runtime[Context]
+) -> RerankOutput:
+    """
+    title: 重排序
+    desc: 对检索结果进行多维度评分和排序
+    integrations: 大语言模型
+    """
+    ctx = runtime.context
+    
+    # 读取配置文件
+    cfg_file = os.path.join(os.getenv("COZE_WORKSPACE_PATH"), config['metadata']['llm_cfg'])
+    with open(cfg_file, 'r', encoding='utf-8') as fd:
+        _cfg = json.load(fd)
+    
+    llm_config = _cfg.get("config", {})
+    sp = _cfg.get("sp", "")
+    up_tpl = Template(_cfg.get("up", ""))
+    
+    # 渲染用户提示词
+    user_prompt_content = up_tpl.render({
+        "user_query": state.user_query,
+        "expanded_results": state.expanded_results
+    })
+    
+    # 调用大语言模型
+    client = LLMClient(ctx=ctx)
+    
+    messages = [
+        {"role": "system", "content": sp},
+        {"role": "user", "content": user_prompt_content}
+    ]
+    
+    try:
+        response = client.invoke(
+            messages=messages,
+            model=llm_config.get("model", "doubao-seed-1-8-251228"),
+            temperature=llm_config.get("temperature", 0.1),
+            top_p=llm_config.get("top_p", 0.9),
+            max_completion_tokens=llm_config.get("max_completion_tokens", 2000),
+            thinking=llm_config.get("thinking", "disabled")
+        )
+        
+        # 提取响应内容
+        response_text = ""
+        if isinstance(response.content, str):
+            response_text = response.content
+        elif isinstance(response.content, list):
+            for item in response.content:
+                if isinstance(item, dict) and item.get("type") == "text":
+                    response_text += item.get("text", "")
+                elif isinstance(item, str):
+                    response_text += item
+        
+        response_text = response_text.strip()
+        
+        # 解析JSON响应
+        result = {
+            "ranked_results": state.expanded_results,
+            "weighted_score": 0.7,
+            "top_score": 0.7,
+            "top_3_avg": 0.7,
+            "average_confidence": 0.7
+        }
+        
+        # 尝试提取JSON内容
+        json_match = re.search(r'\{[^{}]*\}', response_text)
+        if json_match:
+            try:
+                parsed_result = json.loads(json_match.group())
+                if "ranked_results" in parsed_result:
+                    result["ranked_results"] = parsed_result["ranked_results"]
+                if "weighted_score" in parsed_result:
+                    result["weighted_score"] = parsed_result["weighted_score"]
+                if "top_score" in parsed_result:
+                    result["top_score"] = parsed_result["top_score"]
+                if "top_3_avg" in parsed_result:
+                    result["top_3_avg"] = parsed_result["top_3_avg"]
+                if "average_confidence" in parsed_result:
+                    result["average_confidence"] = parsed_result["average_confidence"]
+            except json.JSONDecodeError:
+                pass
+        
+        return RerankOutput(
+            ranked_results=result["ranked_results"],
+            weighted_score=result["weighted_score"],
+            top_score=result["top_score"],
+            top_3_avg=result["top_3_avg"],
+            average_confidence=result["average_confidence"]
+        )
+        
+    except Exception as e:
+        # 发生错误时返回默认值
+        return RerankOutput(
+            ranked_results=state.expanded_results,
+            weighted_score=0.7,
+            top_score=0.7,
+            top_3_avg=0.7,
+            average_confidence=0.7
+        )
+
+
+# ==================== 上下文提取节点 ====================
+
+def context_extract_node(
+    state: ContextExtractInput,
+    config: RunnableConfig,
+    runtime: Runtime[Context]
+) -> ContextExtractOutput:
+    """
+    title: 上下文提取
+    desc: 从检索结果中提取结构化知识（关键概念、关系映射、缺失方面、摘要）
+    integrations: 大语言模型
+    """
+    ctx = runtime.context
+    
+    # 读取配置文件
+    cfg_file = os.path.join(os.getenv("COZE_WORKSPACE_PATH"), config['metadata']['llm_cfg'])
+    with open(cfg_file, 'r', encoding='utf-8') as fd:
+        _cfg = json.load(fd)
+    
+    llm_config = _cfg.get("config", {})
+    sp = _cfg.get("sp", "")
+    up_tpl = Template(_cfg.get("up", ""))
+    
+    # 渲染用户提示词
+    user_prompt_content = up_tpl.render({
+        "user_query": state.user_query,
+        "top_3_results": state.top_3_results
+    })
+    
+    # 调用大语言模型
+    client = LLMClient(ctx=ctx)
+    
+    messages = [
+        {"role": "system", "content": sp},
+        {"role": "user", "content": user_prompt_content}
+    ]
+    
+    try:
+        response = client.invoke(
+            messages=messages,
+            model=llm_config.get("model", "doubao-seed-1-8-251228"),
+            temperature=llm_config.get("temperature", 0.3),
+            top_p=llm_config.get("top_p", 0.9),
+            max_completion_tokens=llm_config.get("max_completion_tokens", 1500),
+            thinking=llm_config.get("thinking", "disabled")
+        )
+        
+        # 提取响应内容
+        response_text = ""
+        if isinstance(response.content, str):
+            response_text = response.content
+        elif isinstance(response.content, list):
+            for item in response.content:
+                if isinstance(item, dict) and item.get("type") == "text":
+                    response_text += item.get("text", "")
+                elif isinstance(item, str):
+                    response_text += item
+        
+        response_text = response_text.strip()
+        
+        # 解析JSON响应
+        result = {
+            "key_concepts": [],
+            "relation_map": {},
+            "missing_aspects": [],
+            "summary": ""
+        }
+        
+        # 尝试提取JSON内容
+        json_match = re.search(r'\{[^{}]*\}', response_text)
+        if json_match:
+            try:
+                parsed_result = json.loads(json_match.group())
+                if "key_concepts" in parsed_result:
+                    result["key_concepts"] = parsed_result["key_concepts"]
+                if "relation_map" in parsed_result:
+                    result["relation_map"] = parsed_result["relation_map"]
+                if "missing_aspects" in parsed_result:
+                    result["missing_aspects"] = parsed_result["missing_aspects"]
+                if "summary" in parsed_result:
+                    result["summary"] = parsed_result["summary"]
+            except json.JSONDecodeError:
+                pass
+        
+        return ContextExtractOutput(
+            key_concepts=result["key_concepts"],
+            relation_map=result["relation_map"],
+            missing_aspects=result["missing_aspects"],
+            summary=result["summary"]
+        )
+        
+    except Exception as e:
+        # 发生错误时返回默认值
+        return ContextExtractOutput(
+            key_concepts=[],
+            relation_map={},
+            missing_aspects=[],
+            summary=""
+        )
+
+
+# ==================== 改善分析节点 ====================
+
+def improvement_analysis_node(
+    state: ImprovementAnalysisInput,
+    config: RunnableConfig,
+    runtime: Runtime[Context]
+) -> ImprovementAnalysisOutput:
+    """
+    title: 改善分析
+    desc: 评估检索结果质量，预测改善潜力，决定是否继续检索
+    integrations: 大语言模型
+    """
+    ctx = runtime.context
+    
+    # 读取配置文件
+    cfg_file = os.path.join(os.getenv("COZE_WORKSPACE_PATH"), config['metadata']['llm_cfg'])
+    with open(cfg_file, 'r', encoding='utf-8') as fd:
+        _cfg = json.load(fd)
+    
+    llm_config = _cfg.get("config", {})
+    sp = _cfg.get("sp", "")
+    up_tpl = Template(_cfg.get("up", ""))
+    
+    # 渲染用户提示词
+    user_prompt_content = up_tpl.render({
+        "user_query": state.user_query,
+        "current_round": state.current_round,
+        "previous_prev_score": state.previous_prev_score,
+        "previous_score": state.previous_score,
+        "current_score": state.current_score,
+        "current_retrieval_results": state.current_retrieval_results,
+        "structured_context": state.structured_context,
+        "previous_context": state.previous_context
+    })
+    
+    # 调用大语言模型
+    client = LLMClient(ctx=ctx)
+    
+    messages = [
+        {"role": "system", "content": sp},
+        {"role": "user", "content": user_prompt_content}
+    ]
+    
+    try:
+        response = client.invoke(
+            messages=messages,
+            model=llm_config.get("model", "doubao-seed-1-8-251228"),
+            temperature=llm_config.get("temperature", 0.3),
+            top_p=llm_config.get("top_p", 0.9),
+            max_completion_tokens=llm_config.get("max_completion_tokens", 2000),
+            thinking=llm_config.get("thinking", "disabled")
+        )
+        
+        # 提取响应内容
+        response_text = ""
+        if isinstance(response.content, str):
+            response_text = response.content
+        elif isinstance(response.content, list):
+            for item in response.content:
+                if isinstance(item, dict) and item.get("type") == "text":
+                    response_text += item.get("text", "")
+                elif isinstance(item, str):
+                    response_text += item
+        
+        response_text = response_text.strip()
+        
+        # 解析JSON响应
+        result = {
+            "improvement_potential": "moderate",
+            "predicted_next_score": state.current_score,
+            "score_change_analysis": {
+                "change_type": "normal_fluctuation",
+                "change_magnitude": 0.0,
+                "change_reason": "默认分析"
+            },
+            "recommendation": "continue",
+            "recommendation_reason": "默认建议：继续检索"
+        }
+        
+        # 尝试提取JSON内容
+        json_match = re.search(r'\{[^{}]*\}', response_text)
+        if json_match:
+            try:
+                parsed_result = json.loads(json_match.group())
+                if "improvement_potential" in parsed_result:
+                    result["improvement_potential"] = parsed_result["improvement_potential"]
+                if "predicted_next_score" in parsed_result:
+                    result["predicted_next_score"] = parsed_result["predicted_next_score"]
+                if "score_change_analysis" in parsed_result:
+                    result["score_change_analysis"] = parsed_result["score_change_analysis"]
+                if "recommendation" in parsed_result:
+                    result["recommendation"] = parsed_result["recommendation"]
+                if "recommendation_reason" in parsed_result:
+                    result["recommendation_reason"] = parsed_result["recommendation_reason"]
+            except json.JSONDecodeError:
+                pass
+        
+        return ImprovementAnalysisOutput(
+            improvement_potential=result["improvement_potential"],
+            predicted_next_score=result["predicted_next_score"],
+            score_change_analysis=result["score_change_analysis"],
+            recommendation=result["recommendation"],
+            recommendation_reason=result["recommendation_reason"]
+        )
+        
+    except Exception as e:
+        # 发生错误时返回默认值
+        return ImprovementAnalysisOutput(
+            improvement_potential="moderate",
+            predicted_next_score=state.current_score,
+            score_change_analysis={
+                "change_type": "normal_fluctuation",
+                "change_magnitude": 0.0,
+                "change_reason": "默认分析"
+            },
+            recommendation="continue",
+            recommendation_reason="默认建议：继续检索"
+        )

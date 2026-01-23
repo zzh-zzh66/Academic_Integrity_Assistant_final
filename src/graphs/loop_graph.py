@@ -1,68 +1,40 @@
 """
 循环检索子图定义
-包含咨询类的循环检索子图
-将consult_retrieval_node、consult_context_expand_node、consult_rerank_node封装成一个子图
+咨询类的循环检索子图，支持动态检索策略
 """
 
 import os
-import json
-import re
+import time
 from typing import Literal
-from jinja2 import Template
-from pydantic import BaseModel, Field
 from langgraph.graph import StateGraph, END
 from langchain_core.runnables import RunnableConfig
 from langgraph.runtime import Runtime
 from coze_coding_utils.runtime_ctx.context import Context
-from coze_coding_dev_sdk import LLMClient, KnowledgeClient
+from coze_coding_dev_sdk import KnowledgeClient
 
-from graphs.nodes.common import (
-    extract_file_name_from_content,
-    expand_content_around_chunk,
-    calculate_weighted_score,
-    extract_top_k_chunks,
-    get_fallback_response
+from graphs.state import (
+    ConsultRetrievalLoopState,
+    RerankInput,
+    RerankOutput,
+    ContextExtractInput,
+    ContextExtractOutput,
+    ImprovementAnalysisInput,
+    ImprovementAnalysisOutput
 )
+from graphs.nodes.common import extract_file_name_from_content
+from graphs.loop_config_loader import config_loader
 
 
-# ==================== 子图状态定义 ====================
+# ==================== 循环内部节点1：知识库检索 ====================
 
-class ConsultRetrievalLoopState(BaseModel):
-    """咨询类循环检索子图状态
-    
-    注意：此状态必须与GlobalState兼容，包含所有检索相关的字段
-    """
-    # ==================== 来自GlobalState的字段 ====================
-    user_query: str = Field(default="", description="用户输入的查询问题")
-    refined_query: str = Field(default="", description="优化后的查询语句")
-    refined_keywords: list = Field(default=[], description="优化后的关键词列表")
-    consult_focus: str = Field(default="", description="咨询焦点")
-    retrieval_results: list = Field(default=[], description="知识库检索结果")
-    
-    # ==================== 循环控制字段 ====================
-    max_rounds: int = Field(default=2, description="最大循环轮次")
-    target_score: float = Field(default=0.8, description="目标分数（达到即退出）")
-    min_score_threshold: float = Field(default=0.65, description="最低阈值（达到最大轮次后判断）")
-    
-    # ==================== 循环状态字段 ====================
-    current_round: int = Field(default=0, description="当前轮次")
-    previous_score: float = Field(default=0.0, description="上一轮分数")
-    current_score: float = Field(default=0.0, description="当前分数（加权求和）")
-    high_score_chunks: list = Field(default=[], description="top-3高分内容（用于下一轮上下文）")
-    exit_reason: str = Field(default="", description="退出原因：target_score_reached/score_decreased/max_rounds_reached/fallback")
-    previous_retrieval_results: list = Field(default=[], description="上一轮的检索结果（用于分数下降时回退）")
-
-
-# ==================== 包装节点：咨询类知识库检索 ====================
-
-def consult_retrieval_wrapper_node(
+def consult_retrieval_internal_node(
     state: ConsultRetrievalLoopState,
     config: RunnableConfig,
     runtime: Runtime[Context]
 ) -> ConsultRetrievalLoopState:
     """
-    title: 咨询类知识库检索（子图节点）
-    desc: 根据咨询类意图检索学术道德规范相关内容
+    title: 知识库检索（内部）
+    desc: 根据动态检索策略执行知识库检索
     integrations: 知识库
     """
     ctx = runtime.context
@@ -103,10 +75,20 @@ def consult_retrieval_wrapper_node(
             context_parts.append(f"，请继续检索更多关于{query}的相关信息。")
             query = " ".join(context_parts)
         
-        # 执行检索：咨询类需要更多信息，降低阈值
-        # 第一轮用top_k=15，第二轮用top_k=10
-        top_k = 10 if state.current_round >= 1 else 15
-        min_score = 0.3 if state.current_round == 0 else 0.6
+        # 根据当前轮次和检索策略确定参数
+        current_round = state.current_round
+        retrieval_strategy = state.retrieval_strategy
+        
+        # 使用动态参数（优先从retrieval_strategy中获取）
+        if current_round == 0:
+            top_k = retrieval_strategy.get("top_k", state.top_k_first_round)
+            min_score = retrieval_strategy.get("min_score", state.min_score_first_round)
+        elif current_round == 1:
+            top_k = retrieval_strategy.get("top_k", state.top_k_second_round)
+            min_score = retrieval_strategy.get("min_score", state.min_score_second_round)
+        else:
+            top_k = retrieval_strategy.get("top_k", state.top_k_third_round)
+            min_score = retrieval_strategy.get("min_score", state.min_score_third_round)
         
         response = client.search(
             query=query,
@@ -140,27 +122,25 @@ def consult_retrieval_wrapper_node(
         return state
 
 
-# ==================== 包装节点：咨询类上下文扩展 ====================
+# ==================== 循环内部节点2：内容扩展 ====================
 
-def consult_context_expand_wrapper_node(
+def consult_expand_internal_node(
     state: ConsultRetrievalLoopState,
     config: RunnableConfig,
     runtime: Runtime[Context]
 ) -> ConsultRetrievalLoopState:
     """
-    title: 咨询类上下文扩展（子图节点）
-    desc: 扩展咨询类检索结果，获取完整段落
+    title: 内容扩展（内部）
+    desc: 扩展检索结果，获取完整段落
     """
-    ctx = runtime.context
-    
     try:
         expanded_results = []
         
         for result in state.retrieval_results:
             original_content = result.get("content", "")
             
-            # 扩展内容到 500-800 字
-            expanded_content = expand_content_around_chunk(original_content, target_length=650)
+            # 简单扩展：直接使用原内容
+            expanded_content = original_content
             
             expanded_results.append({
                 "content": expanded_content,
@@ -180,96 +160,60 @@ def consult_context_expand_wrapper_node(
         return state
 
 
-# ==================== 包装节点：咨询类重排序 ====================
+# ==================== 循环内部节点3：重排序 ====================
 
-def consult_rerank_wrapper_node(
+def rerank_internal_node(
     state: ConsultRetrievalLoopState,
     config: RunnableConfig,
     runtime: Runtime[Context]
 ) -> ConsultRetrievalLoopState:
     """
-    title: 咨询类重排序（子图节点）
-    desc: 对咨询类扩展结果进行多维度评分和排序，计算加权总分
+    title: 重排序（内部）
+    desc: 对检索结果进行多维度评分和排序
     integrations: 大语言模型
     """
-    ctx = runtime.context
+    # 延迟导入，避免循环依赖
+    from graphs.nodes.consult import rerank_node
+    from graphs.nodes.common import calculate_weighted_score, extract_top_k_chunks
     
     try:
-        # 读取配置文件
-        cfg_file = os.path.join(os.getenv("COZE_WORKSPACE_PATH"), "config/consult_rerank_cfg.json")
-        with open(cfg_file, 'r', encoding='utf-8') as fd:
-            _cfg = json.load(fd)
+        # 获取配置文件路径
+        config_path = config_loader.get_node_config_path("consult", "rerank")
         
-        llm_config = _cfg.get("config", {})
-        sp = _cfg.get("sp", "")
-        up_tpl = Template(_cfg.get("up", ""))
-        
-        # 渲染用户提示词
-        user_prompt_content = up_tpl.render({
-            "user_query": state.user_query,
-            "expanded_results": state.retrieval_results
-        })
-        
-        # 调用大语言模型
-        client = LLMClient(ctx=ctx)
-        
-        messages = [
-            {"role": "system", "content": sp},
-            {"role": "user", "content": user_prompt_content}
-        ]
-        
-        response = client.invoke(
-            messages=messages,
-            model=llm_config.get("model", "doubao-seed-1-8-251228"),
-            temperature=llm_config.get("temperature", 0.1),
-            top_p=llm_config.get("top_p", 0.9),
-            max_completion_tokens=llm_config.get("max_completion_tokens", 2000),
-            thinking=llm_config.get("thinking", "disabled")
+        # 调用rerank_node
+        rerank_input = RerankInput(
+            user_query=state.user_query,
+            expanded_results=state.retrieval_results
         )
         
-        # 提取响应内容
-        response_text = ""
-        if isinstance(response.content, str):
-            response_text = response.content
-        elif isinstance(response.content, list):
-            for item in response.content:
-                if isinstance(item, dict) and item.get("type") == "text":
-                    response_text += item.get("text", "")
-                elif isinstance(item, str):
-                    response_text += item
+        # 临时创建config，包含llm_cfg路径
+        temp_config = RunnableConfig(
+            configurable={},
+            metadata={"llm_cfg": config_path} if config_path else {}
+        )
         
-        response_text = response_text.strip()
+        rerank_output = rerank_node(rerank_input, temp_config, runtime)
         
-        # 解析 JSON 响应
-        try:
-            # 提取 JSON 内容
-            json_start = response_text.find("{")
-            json_end = response_text.rfind("}") + 1
-            
-            if json_start >= 0 and json_end > json_start:
-                json_str = response_text[json_start:json_end]
-                result_json = json.loads(json_str)
-                ranked_results = result_json.get("ranked_results", [])
-            else:
-                # 无法解析 JSON，返回原始结果
-                ranked_results = state.retrieval_results[:5]
-        except Exception as e:
-            # 解析失败，返回原始结果
-            ranked_results = state.retrieval_results[:5]
+        # 计算加权总分（使用rerank输出的weighted_score）
+        weighted_score = rerank_output.weighted_score
         
-        # 计算加权总分
-        weighted_score = calculate_weighted_score(ranked_results)
-        
-        # 提取top-3高分内容（用于下一轮）
-        high_score_chunks = extract_top_k_chunks(ranked_results, 3)
+        # 提取top-3高分内容
+        high_score_chunks = []
+        for result in rerank_output.ranked_results[:3]:
+            high_score_chunks.append(result.get("content", ""))
         
         # 更新状态
         updated_state = state.model_copy(deep=True)
+        updated_state.previous_prev_score = state.previous_score
         updated_state.previous_score = state.current_score
         updated_state.current_score = weighted_score
-        updated_state.current_round = state.current_round + 1  # 轮次递增
-        updated_state.retrieval_results = ranked_results
+        updated_state.current_round = state.current_round + 1
+        updated_state.retrieval_results = rerank_output.ranked_results
         updated_state.high_score_chunks = high_score_chunks
+        updated_state.ranked_results = rerank_output.ranked_results
+        updated_state.top_score = rerank_output.top_score
+        updated_state.top_3_avg = rerank_output.top_3_avg
+        updated_state.average_confidence = rerank_output.average_confidence
         
         # 设置退出原因
         if weighted_score >= state.target_score:
@@ -292,23 +236,161 @@ def consult_rerank_wrapper_node(
         return updated_state
 
 
+# ==================== 循环内部节点4：上下文提取 ====================
+
+def context_extract_internal_node(
+    state: ConsultRetrievalLoopState,
+    config: RunnableConfig,
+    runtime: Runtime[Context]
+) -> ConsultRetrievalLoopState:
+    """
+    title: 上下文提取（内部）
+    desc: 从top-3结果中提取结构化知识
+    integrations: 大语言模型
+    """
+    # 延迟导入，避免循环依赖
+    from graphs.nodes.consult import context_extract_node
+    
+    try:
+        # 检查配置：是否执行context_extract节点
+        if not config_loader.should_execute_node("consult", "context_extract", state.current_round):
+            # 不执行，直接返回
+            return state
+        
+        # 获取配置文件路径
+        config_path = config_loader.get_node_config_path("consult", "context_extract")
+        if not config_path:
+            return state
+        
+        # 提取top-3结果
+        top_3_results = state.ranked_results[:3] if state.ranked_results else state.retrieval_results[:3]
+        
+        # 调用context_extract_node
+        context_extract_input = ContextExtractInput(
+            user_query=state.user_query,
+            top_3_results=top_3_results
+        )
+        
+        # 临时创建config，包含llm_cfg路径
+        temp_config = RunnableConfig(
+            configurable={},
+            metadata={"llm_cfg": config_path}
+        )
+        
+        context_extract_output = context_extract_node(context_extract_input, temp_config, runtime)
+        
+        # 保存上一轮上下文
+        updated_state = state.model_copy(deep=True)
+        updated_state.previous_context = state.structured_context.copy() if state.structured_context else {}
+        
+        # 更新结构化上下文
+        updated_state.structured_context = {
+            "key_concepts": context_extract_output.key_concepts,
+            "relation_map": context_extract_output.relation_map,
+            "missing_aspects": context_extract_output.missing_aspects,
+            "summary": context_extract_output.summary
+        }
+        updated_state.key_concepts = context_extract_output.key_concepts
+        updated_state.relation_map = context_extract_output.relation_map
+        updated_state.missing_aspects = context_extract_output.missing_aspects
+        updated_state.context_summary = context_extract_output.summary
+        
+        return updated_state
+        
+    except Exception as e:
+        # 发生错误时，返回原始状态
+        return state
+
+
+# ==================== 循环内部节点5：改善分析 ====================
+
+def improvement_analysis_internal_node(
+    state: ConsultRetrievalLoopState,
+    config: RunnableConfig,
+    runtime: Runtime[Context]
+) -> ConsultRetrievalLoopState:
+    """
+    title: 改善分析（内部）
+    desc: 评估检索结果质量，决定是否继续检索
+    integrations: 大语言模型
+    """
+    # 延迟导入，避免循环依赖
+    from graphs.nodes.consult import improvement_analysis_node
+    
+    try:
+        # 检查配置：是否执行improvement_analysis节点
+        if not config_loader.should_execute_node("consult", "improvement_analysis", state.current_round):
+            # 不执行，直接返回
+            return state
+        
+        # 获取配置文件路径
+        config_path = config_loader.get_node_config_path("consult", "improvement_analysis")
+        if not config_path:
+            return state
+        
+        # 调用improvement_analysis_node
+        improvement_input = ImprovementAnalysisInput(
+            user_query=state.user_query,
+            current_round=state.current_round,
+            previous_prev_score=state.previous_prev_score,
+            previous_score=state.previous_score,
+            current_score=state.current_score,
+            current_retrieval_results=state.retrieval_results,
+            structured_context=state.structured_context,
+            previous_context=state.previous_context
+        )
+        
+        # 临时创建config，包含llm_cfg路径
+        temp_config = RunnableConfig(
+            configurable={},
+            metadata={"llm_cfg": config_path}
+        )
+        
+        improvement_output = improvement_analysis_node(improvement_input, temp_config, runtime)
+        
+        # 更新状态
+        updated_state = state.model_copy(deep=True)
+        updated_state.improvement_potential = improvement_output.improvement_potential
+        updated_state.predicted_next_score = improvement_output.predicted_next_score
+        updated_state.score_change_analysis = improvement_output.score_change_analysis
+        updated_state.recommendation = improvement_output.recommendation
+        
+        # 根据建议决定退出策略
+        if improvement_output.recommendation == "exit_now":
+            updated_state.exit_reason = "target_score_reached"
+        elif improvement_output.recommendation == "exit_best_effort":
+            updated_state.exit_reason = "max_rounds_reached"
+        
+        return updated_state
+        
+    except Exception as e:
+        # 发生错误时，返回原始状态
+        return state
+
+
 # ==================== 循环条件判断 ====================
 
 def should_continue_consult_loop(state: ConsultRetrievalLoopState) -> Literal["continue", "exit_success", "exit_fallback"]:
     """
     title: 咨询类循环条件判断
-    desc: 判断是否继续循环检索，根据分数变化和阈值决定退出策略
+    desc: 判断是否继续循环检索
     """
     # 1. 判断是否达到目标分数
     if state.current_score >= state.target_score:
         return "exit_success"
     
-    # 2. 判断分数是否下降（仅从第二轮开始）
+    # 2. 判断是否已退出（由improvement_analysis_node设置）
+    if state.exit_reason in ["target_score_reached", "max_rounds_reached"]:
+        return "exit_success"
+    elif state.exit_reason == "fallback":
+        return "exit_fallback"
+    
+    # 3. 判断分数是否下降（仅从第二轮开始）
     if state.current_round > 1:
         if state.current_score < state.previous_score:
             return "exit_fallback"
     
-    # 3. 判断是否达到最大轮次
+    # 4. 判断是否达到最大轮次
     if state.current_round >= state.max_rounds:
         # 检查是否达到最低阈值
         if state.current_score >= state.min_score_threshold:
@@ -316,11 +398,11 @@ def should_continue_consult_loop(state: ConsultRetrievalLoopState) -> Literal["c
         else:
             return "exit_fallback"
     
-    # 4. 继续循环
+    # 5. 继续循环
     return "continue"
 
 
-# ==================== 咨询类循环检索子图 ====================
+# ==================== 创建咨询类循环检索子图 ====================
 
 def create_consult_retrieval_subgraph() -> StateGraph:
     """
@@ -332,28 +414,32 @@ def create_consult_retrieval_subgraph() -> StateGraph:
     # 创建子图状态图
     builder = StateGraph(
         ConsultRetrievalLoopState,
-        input_schema=None,  # 子图不需要单独的input_schema
-        output_schema=None  # 子图不需要单独的output_schema
+        input_schema=None,
+        output_schema=None
     )
     
     # 添加节点
-    builder.add_node("consult_retrieval_wrapper", consult_retrieval_wrapper_node)
-    builder.add_node("consult_context_expand_wrapper", consult_context_expand_wrapper_node)
-    builder.add_node("consult_rerank_wrapper", consult_rerank_wrapper_node)
+    builder.add_node("consult_retrieval_internal", consult_retrieval_internal_node)
+    builder.add_node("consult_expand_internal", consult_expand_internal_node)
+    builder.add_node("rerank_internal", rerank_internal_node)
+    builder.add_node("context_extract_internal", context_extract_internal_node)
+    builder.add_node("improvement_analysis_internal", improvement_analysis_internal_node)
     
     # 设置入口点
-    builder.set_entry_point("consult_retrieval_wrapper")
+    builder.set_entry_point("consult_retrieval_internal")
     
-    # 添加边：检索 → 扩展 → 重排序
-    builder.add_edge("consult_retrieval_wrapper", "consult_context_expand_wrapper")
-    builder.add_edge("consult_context_expand_wrapper", "consult_rerank_wrapper")
+    # 添加边：检索 → 扩展 → 重排序 → 上下文提取 → 改善分析
+    builder.add_edge("consult_retrieval_internal", "consult_expand_internal")
+    builder.add_edge("consult_expand_internal", "rerank_internal")
+    builder.add_edge("rerank_internal", "context_extract_internal")
+    builder.add_edge("context_extract_internal", "improvement_analysis_internal")
     
-    # 添加条件边：重排序 → 继续循环或退出
+    # 添加条件边：改善分析 → 继续循环或退出
     builder.add_conditional_edges(
-        source="consult_rerank_wrapper",
+        source="improvement_analysis_internal",
         path=should_continue_consult_loop,
         path_map={
-            "continue": "consult_retrieval_wrapper",  # 继续循环
+            "continue": "consult_retrieval_internal",  # 继续循环
             "exit_success": END,  # 成功退出
             "exit_fallback": END  # 兜底退出
         }

@@ -19,9 +19,11 @@ from graphs.nodes import (
     judge_rerank_node,
     mixed_context_expand_node,
     mixed_rerank_node,
-    response_generation_node
+    response_generation_node,
+    complexity_node,
+    consult_query_optimize_node
 )
-from graphs.nodes.consult import consult_retrieval_loop_node
+from graphs.nodes.consult_loop import consult_retrieval_loop_node
 
 
 def route_intent_type(state: GlobalState) -> str:
@@ -45,15 +47,26 @@ def route_intent_type(state: GlobalState) -> str:
 builder = StateGraph(GlobalState, input_schema=GraphInput, output_schema=GraphOutput)
 
 # 添加节点
+# 第一步：查询复杂度判断（在意图识别之前）
+builder.add_node("complexity", complexity_node,
+                metadata={"type": "agent", "llm_cfg": "config/nodes/complexity_cfg.json"})
+
+# 第二步：意图识别
 builder.add_node("intent_recognition", intent_recognition_node,
                 metadata={"type": "agent", "llm_cfg": "config/intent_recognition_cfg.json"})
+
+# 第三步：术语预处理
 builder.add_node("term_preprocessing", term_preprocessing_node)
 
 # 咨询类意图处理节点
 builder.add_node("consult_process", consult_process_node,
                 metadata={"type": "agent", "llm_cfg": "config/consult_process_cfg.json"})
 
-# 咨询类循环检索节点（通过调用子图实现，封装了consult_retrieval、consult_context_expand、consult_rerank三个节点）
+# 咨询查询优化节点（在consult_process和consult_retrieval_loop之间）
+builder.add_node("consult_query_optimize", consult_query_optimize_node,
+                metadata={"type": "agent", "llm_cfg": "config/nodes/consult/consult_query_optimize_cfg.json"})
+
+# 咨询类循环检索节点（通过调用子图实现）
 builder.add_node("consult_retrieval_loop", consult_retrieval_loop_node,
                 metadata={"type": "looparray"})
 
@@ -80,9 +93,10 @@ builder.add_node("response_generation", response_generation_node,
                 metadata={"type": "agent", "llm_cfg": "config/response_generation_cfg.json"})
 
 # 设置入口点
-builder.set_entry_point("intent_recognition")
+builder.set_entry_point("complexity")
 
-# 添加边：意图识别 → 术语预处理
+# 添加边：查询复杂度判断 → 意图识别 → 术语预处理
+builder.add_edge("complexity", "intent_recognition")
 builder.add_edge("intent_recognition", "term_preprocessing")
 
 # 添加条件分支：根据意图类型路由到不同的处理节点
@@ -97,7 +111,8 @@ builder.add_conditional_edges(
 )
 
 # 三个处理分支分别路由到对应的检索节点
-builder.add_edge("consult_process", "consult_retrieval_loop")  # 咨询类使用循环检索
+builder.add_edge("consult_process", "consult_query_optimize")  # 咨询类：先优化查询，再循环检索
+builder.add_edge("consult_query_optimize", "consult_retrieval_loop")  # 优化后进入循环检索
 builder.add_edge("judge_process", "judge_retrieval")
 builder.add_edge("mixed_process", "mixed_retrieval")
 
