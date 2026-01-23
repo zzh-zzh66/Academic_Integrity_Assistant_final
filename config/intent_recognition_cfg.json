@@ -1,7 +1,7 @@
 {
     "config": {
         "model": "doubao-seed-1-8-251228",
-        "temperature": 0.0,
+        "temperature": 0,
         "top_p": 0.9,
         "max_completion_tokens": 1500,
         "timeout": 600,
