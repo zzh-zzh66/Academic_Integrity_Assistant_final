@@ -583,13 +583,15 @@ def consult_query_optimize_node(
             "optimized_query": state.refined_query if state.refined_query else state.user_query,
             "optimized_keywords": state.refined_keywords if state.refined_keywords else state.extracted_keywords if hasattr(state, 'extracted_keywords') else [],
             "retrieval_strategy": {
-                "top_k": 15,
-                "min_score": 0.3,
+                "top_k_first_round": 20,
+                "min_score_first_round": 0.25,
+                "top_k_second_round": 15,
+                "min_score_second_round": 0.55,
                 "max_rounds": 2,
-                "target_score": 0.8,
-                "min_score_threshold": 0.65
+                "target_score": 0.75,
+                "min_score_threshold": 0.6
             },
-            "optimization_reason": "默认优化策略"
+            "optimization_reason": "默认优化策略（标准查询）：第1轮扩大检索范围到20个候选，第2轮精准筛选15个高质量结果"
         }
         
         # 尝试提取JSON内容
@@ -621,13 +623,15 @@ def consult_query_optimize_node(
             optimized_query=state.refined_query if state.refined_query else state.user_query,
             optimized_keywords=state.refined_keywords if state.refined_keywords else state.extracted_keywords if hasattr(state, 'extracted_keywords') else [],
             retrieval_strategy={
-                "top_k": 15,
-                "min_score": 0.3,
+                "top_k_first_round": 20,
+                "min_score_first_round": 0.25,
+                "top_k_second_round": 15,
+                "min_score_second_round": 0.55,
                 "max_rounds": 2,
-                "target_score": 0.8,
-                "min_score_threshold": 0.65
+                "target_score": 0.75,
+                "min_score_threshold": 0.6
             },
-            optimization_reason="默认优化策略"
+            optimization_reason="默认优化策略（标准查询）：第1轮扩大检索范围到20个候选，第2轮精准筛选15个高质量结果"
         )
 
 

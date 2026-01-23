@@ -52,12 +52,23 @@ def consult_retrieval_loop_node(
     logger.info(f"查询复杂度: {query_complexity}")
     logger.info(f"检索策略: {retrieval_strategy}")
     
-    # 提取动态参数
-    strategy_top_k = retrieval_strategy.get("top_k", 15)
-    strategy_min_score = retrieval_strategy.get("min_score", 0.3)
+    # 提取动态参数（支持多轮检索策略）
     strategy_max_rounds = retrieval_strategy.get("max_rounds", 2)
-    strategy_target_score = retrieval_strategy.get("target_score", 0.8)
-    strategy_min_score_threshold = retrieval_strategy.get("min_score_threshold", 0.65)
+    strategy_target_score = retrieval_strategy.get("target_score", 0.75)
+    strategy_min_score_threshold = retrieval_strategy.get("min_score_threshold", 0.6)
+    
+    # 提取多轮检索参数
+    strategy_top_k_first_round = retrieval_strategy.get("top_k_first_round", 20)
+    strategy_min_score_first_round = retrieval_strategy.get("min_score_first_round", 0.25)
+    strategy_top_k_second_round = retrieval_strategy.get("top_k_second_round", 15)
+    strategy_min_score_second_round = retrieval_strategy.get("min_score_second_round", 0.55)
+    
+    # 兼容旧的API（如果没有多轮参数，则回退到单轮参数）
+    if "top_k_first_round" not in retrieval_strategy:
+        strategy_top_k_first_round = retrieval_strategy.get("top_k", 20)
+        strategy_min_score_first_round = retrieval_strategy.get("min_score", 0.25)
+        strategy_top_k_second_round = retrieval_strategy.get("top_k", 15)
+        strategy_min_score_second_round = retrieval_strategy.get("min_score", 0.55)
     
     # 根据复杂度设置默认参数
     if query_complexity == "simple":
@@ -78,28 +89,35 @@ def consult_retrieval_loop_node(
     target_score = strategy_target_score if strategy_target_score else 0.8
     min_score_threshold = strategy_min_score_threshold if strategy_min_score_threshold else 0.65
     
-    # 根据复杂度设置不同轮次的参数
+    # 根据复杂度设置不同轮次的参数（作为默认值）
     if query_complexity == "simple":
-        top_k_first_round = strategy_top_k if strategy_top_k else 10
-        min_score_first_round = strategy_min_score if strategy_min_score else 0.4
-        top_k_second_round = 8
-        min_score_second_round = 0.5
-        top_k_third_round = 6
-        min_score_third_round = 0.6
+        # 简单查询：快速聚焦
+        default_top_k_first_round = 12
+        default_min_score_first_round = 0.35
+        default_top_k_second_round = 8
+        default_min_score_second_round = 0.65
+        default_max_rounds = 2
     elif query_complexity == "complex":
-        top_k_first_round = strategy_top_k if strategy_top_k else 20
-        min_score_first_round = strategy_min_score if strategy_min_score else 0.25
-        top_k_second_round = 15
-        min_score_second_round = 0.3
-        top_k_third_round = 10
-        min_score_third_round = 0.35
+        # 复杂查询：全面覆盖
+        default_top_k_first_round = 25
+        default_min_score_first_round = 0.2
+        default_top_k_second_round = 20
+        default_min_score_second_round = 0.5
+        default_max_rounds = 2
     else:  # standard
-        top_k_first_round = strategy_top_k if strategy_top_k else 15
-        min_score_first_round = strategy_min_score if strategy_min_score else 0.3
-        top_k_second_round = 10
-        min_score_second_round = 0.6
-        top_k_third_round = 8
-        min_score_third_round = 0.7
+        # 标准查询：平衡策略（方案A）
+        default_top_k_first_round = 20
+        default_min_score_first_round = 0.25
+        default_top_k_second_round = 15
+        default_min_score_second_round = 0.55
+        default_max_rounds = 2
+    
+    # 使用retrieval_strategy中的参数（如果有的话），否则使用复杂度默认值
+    top_k_first_round = strategy_top_k_first_round if strategy_top_k_first_round else default_top_k_first_round
+    min_score_first_round = strategy_min_score_first_round if strategy_min_score_first_round else default_min_score_first_round
+    top_k_second_round = strategy_top_k_second_round if strategy_top_k_second_round else default_top_k_second_round
+    min_score_second_round = strategy_min_score_second_round if strategy_min_score_second_round else default_min_score_second_round
+    max_rounds = strategy_max_rounds if strategy_max_rounds else default_max_rounds
     
     # 记录最终使用的参数
     logger.info(f"最终参数:")
@@ -108,7 +126,6 @@ def consult_retrieval_loop_node(
     logger.info(f"  min_score_threshold: {min_score_threshold}")
     logger.info(f"  top_k_first_round: {top_k_first_round}, min_score_first_round: {min_score_first_round}")
     logger.info(f"  top_k_second_round: {top_k_second_round}, min_score_second_round: {min_score_second_round}")
-    logger.info(f"  top_k_third_round: {top_k_third_round}, min_score_third_round: {min_score_third_round}")
     
     # 1. 将父图状态转换为子图状态
     subgraph_state = ConsultRetrievalLoopState(
@@ -123,13 +140,13 @@ def consult_retrieval_loop_node(
         max_rounds=max_rounds,
         target_score=target_score,
         min_score_threshold=min_score_threshold,
-        # 动态参数
+        # 动态参数（简化为2轮）
         top_k_first_round=top_k_first_round,
         top_k_second_round=top_k_second_round,
-        top_k_third_round=top_k_third_round,
+        top_k_third_round=8,  # 保留兼容性，但不会使用
         min_score_first_round=min_score_first_round,
         min_score_second_round=min_score_second_round,
-        min_score_third_round=min_score_third_round,
+        min_score_third_round=0.7,  # 保留兼容性，但不会使用
         # 初始化状态
         current_round=0,
         previous_score=0.0,

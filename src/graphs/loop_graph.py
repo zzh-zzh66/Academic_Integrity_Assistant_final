@@ -101,16 +101,17 @@ def consult_retrieval_internal_node(
         current_round = state.current_round
         retrieval_strategy = state.retrieval_strategy
         
-        # 使用动态参数（优先从retrieval_strategy中获取）
+        # 使用动态参数（优先从retrieval_strategy中获取多轮参数）
         if current_round == 0:
+            top_k = retrieval_strategy.get("top_k_first_round", state.top_k_first_round)
+            min_score = retrieval_strategy.get("min_score_first_round", state.min_score_first_round)
+        elif current_round == 1:
+            top_k = retrieval_strategy.get("top_k_second_round", state.top_k_second_round)
+            min_score = retrieval_strategy.get("min_score_second_round", state.min_score_second_round)
+        else:
+            # 兼容旧的API（如果还有第3轮的情况）
             top_k = retrieval_strategy.get("top_k", state.top_k_first_round)
             min_score = retrieval_strategy.get("min_score", state.min_score_first_round)
-        elif current_round == 1:
-            top_k = retrieval_strategy.get("top_k", state.top_k_second_round)
-            min_score = retrieval_strategy.get("min_score", state.min_score_second_round)
-        else:
-            top_k = retrieval_strategy.get("top_k", state.top_k_third_round)
-            min_score = retrieval_strategy.get("min_score", state.min_score_third_round)
         
         logger.info(f"检索参数: top_k={top_k}, min_score={min_score}")
         
