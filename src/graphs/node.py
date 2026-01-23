@@ -13,6 +13,12 @@ from graphs.state import (
     IntentRecognitionOutput,
     KnowledgeRetrievalInput,
     KnowledgeRetrievalOutput,
+    ConsultRetrievalInput,
+    ConsultRetrievalOutput,
+    JudgeRetrievalInput,
+    JudgeRetrievalOutput,
+    MixedRetrievalInput,
+    MixedRetrievalOutput,
     ResponseGenerationInput,
     ResponseGenerationOutput,
     ConsultProcessInput,
@@ -189,6 +195,275 @@ def knowledge_retrieval_node(
     except Exception as e:
         # 发生错误时返回空结果
         return KnowledgeRetrievalOutput(
+            retrieval_results=[]
+        )
+
+
+def extract_file_name_from_content(content: str) -> str:
+    """
+    从知识库内容中提取文件名
+    
+    Args:
+        content: 知识库检索返回的内容
+        
+    Returns:
+        文件名称
+    """
+    # 匹配 [文件路径: xxx/yyy.pdf] 格式
+    match = re.search(r'\[文件路径:\s*[^\]]*?([^/\\\[\]]+\.(?:pdf|docx|txt))\]', content)
+    if match:
+        return match.group(1)
+    return ""
+
+
+def consult_retrieval_node(
+    state: ConsultRetrievalInput,
+    config: RunnableConfig,
+    runtime: Runtime[Context]
+) -> ConsultRetrievalOutput:
+    """
+    title: 咨询类知识库检索
+    desc: 根据咨询类意图检索学术道德规范相关内容，获取更详细的说明和定义
+    integrations: 知识库
+    """
+    ctx = runtime.context
+    
+    try:
+        # 初始化知识库客户端
+        client = KnowledgeClient(ctx=ctx)
+        
+        # 构建检索查询
+        query = state.user_query
+        
+        # 优先使用优化后的查询
+        if state.refined_query:
+            query = state.refined_query
+        
+        # 添加咨询焦点（如果有）
+        if state.consult_focus:
+            query = f"{query} {state.consult_focus}"
+        
+        # 添加关键词（如果有）
+        keywords = state.refined_keywords if state.refined_keywords else state.extracted_keywords
+        if keywords:
+            keywords_str = " ".join(keywords)
+            query = f"{query} {keywords_str}"
+        
+        # 添加咨询类增强词
+        query = f"{query} 定义 要求 规范 说明"
+        
+        # 执行检索：咨询类需要更多信息，降低阈值
+        response = client.search(
+            query=query,
+            top_k=7,
+            min_score=0.4
+        )
+        
+        # 处理检索结果
+        retrieval_results = []
+        if response.code == 0 and response.chunks:
+            for chunk in response.chunks:
+                # 提取文件名
+                file_name = extract_file_name_from_content(chunk.content)
+                
+                retrieval_results.append({
+                    "content": chunk.content,
+                    "score": chunk.score,
+                    "doc_id": chunk.doc_id,
+                    "file_name": file_name
+                })
+        
+        return ConsultRetrievalOutput(
+            retrieval_results=retrieval_results
+        )
+        
+    except Exception as e:
+        # 发生错误时返回空结果
+        return ConsultRetrievalOutput(
+            retrieval_results=[]
+        )
+
+
+def judge_retrieval_node(
+    state: JudgeRetrievalInput,
+    config: RunnableConfig,
+    runtime: Runtime[Context]
+) -> JudgeRetrievalOutput:
+    """
+    title: 行为判断类知识库检索
+    desc: 根据行为判断类意图检索相关规范，确保与用户描述的行为高度一致
+    integrations: 知识库
+    """
+    ctx = runtime.context
+    
+    try:
+        # 初始化知识库客户端
+        client = KnowledgeClient(ctx=ctx)
+        
+        # 构建检索查询 - 使用行为分析增强查询
+        query = state.user_query
+        
+        # 优先使用优化后的查询
+        if state.refined_query:
+            query = state.refined_query
+        
+        # 添加行为分析信息（如果有的话）
+        if state.behavior_subject or state.behavior_action or state.behavior_object:
+            behavior_parts = []
+            if state.behavior_subject:
+                behavior_parts.append(f"主体:{state.behavior_subject}")
+            if state.behavior_action:
+                behavior_parts.append(f"动作:{state.behavior_action}")
+            if state.behavior_object:
+                behavior_parts.append(f"对象:{state.behavior_object}")
+            query = f"{query} {' '.join(behavior_parts)}"
+        
+        # 添加关键词（如果有）
+        keywords = state.refined_keywords if state.refined_keywords else state.extracted_keywords
+        if keywords:
+            keywords_str = " ".join(keywords)
+            query = f"{query} {keywords_str}"
+        
+        # 执行检索：行为判断类需要高精度，提高阈值
+        response = client.search(
+            query=query,
+            top_k=3,
+            min_score=0.65
+        )
+        
+        # 处理检索结果
+        retrieval_results = []
+        can_judge = True
+        
+        if response.code == 0 and response.chunks:
+            # 检查最高分是否达到阈值
+            if response.chunks and response.chunks[0].score < 0.65:
+                can_judge = False
+            
+            for chunk in response.chunks:
+                # 提取文件名
+                file_name = extract_file_name_from_content(chunk.content)
+                
+                retrieval_results.append({
+                    "content": chunk.content,
+                    "score": chunk.score,
+                    "doc_id": chunk.doc_id,
+                    "file_name": file_name
+                })
+        else:
+            can_judge = False
+        
+        return JudgeRetrievalOutput(
+            retrieval_results=retrieval_results,
+            can_judge=can_judge
+        )
+        
+    except Exception as e:
+        # 发生错误时返回空结果，无法判断
+        return JudgeRetrievalOutput(
+            retrieval_results=[],
+            can_judge=False
+        )
+
+
+def mixed_retrieval_node(
+    state: MixedRetrievalInput,
+    config: RunnableConfig,
+    runtime: Runtime[Context]
+) -> MixedRetrievalOutput:
+    """
+    title: 混合类知识库检索
+    desc: 根据混合类意图检索，分两路检索后合并（咨询路+判断路）
+    integrations: 知识库
+    """
+    ctx = runtime.context
+    
+    try:
+        # 初始化知识库客户端
+        client = KnowledgeClient(ctx=ctx)
+        
+        all_results = []
+        
+        # 第一路：咨询类检索
+        consult_query = state.consult_query if state.consult_query else state.user_query
+        if state.consult_keywords:
+            consult_query = f"{consult_query} {' '.join(state.consult_keywords)}"
+        if state.consult_focus:
+            consult_query = f"{consult_query} {state.consult_focus}"
+        consult_query = f"{consult_query} 定义 要求 规范"
+        
+        consult_response = client.search(
+            query=consult_query,
+            top_k=7,
+            min_score=0.4
+        )
+        
+        if consult_response.code == 0 and consult_response.chunks:
+            for chunk in consult_response.chunks:
+                file_name = extract_file_name_from_content(chunk.content)
+                all_results.append({
+                    "content": chunk.content,
+                    "score": chunk.score,
+                    "doc_id": chunk.doc_id,
+                    "file_name": file_name,
+                    "source": "consult"
+                })
+        
+        # 第二路：判断类检索
+        judge_query = state.judge_query if state.judge_query else state.user_query
+        
+        # 添加行为分析信息
+        if state.behavior_subject or state.behavior_action or state.behavior_object:
+            behavior_parts = []
+            if state.behavior_subject:
+                behavior_parts.append(f"主体:{state.behavior_subject}")
+            if state.behavior_action:
+                behavior_parts.append(f"动作:{state.behavior_action}")
+            if state.behavior_object:
+                behavior_parts.append(f"对象:{state.behavior_object}")
+            judge_query = f"{judge_query} {' '.join(behavior_parts)}"
+        
+        if state.judge_keywords:
+            judge_query = f"{judge_query} {' '.join(state.judge_keywords)}"
+        
+        judge_response = client.search(
+            query=judge_query,
+            top_k=3,
+            min_score=0.6
+        )
+        
+        if judge_response.code == 0 and judge_response.chunks:
+            for chunk in judge_response.chunks:
+                file_name = extract_file_name_from_content(chunk.content)
+                all_results.append({
+                    "content": chunk.content,
+                    "score": chunk.score,
+                    "doc_id": chunk.doc_id,
+                    "file_name": file_name,
+                    "source": "judge"
+                })
+        
+        # 合并去重（按doc_id去重），保留最高分
+        unique_results = {}
+        for result in all_results:
+            doc_id = result["doc_id"]
+            if doc_id not in unique_results:
+                unique_results[doc_id] = result
+            else:
+                # 保留分数更高的结果
+                if result["score"] > unique_results[doc_id]["score"]:
+                    unique_results[doc_id] = result
+        
+        # 按分数排序，取top 6
+        sorted_results = sorted(unique_results.values(), key=lambda x: x["score"], reverse=True)[:6]
+        
+        return MixedRetrievalOutput(
+            retrieval_results=sorted_results
+        )
+        
+    except Exception as e:
+        # 发生错误时返回空结果
+        return MixedRetrievalOutput(
             retrieval_results=[]
         )
 

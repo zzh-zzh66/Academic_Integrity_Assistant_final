@@ -8,6 +8,7 @@ class GlobalState(BaseModel):
     intent_type: str = Field(default="", description="识别到的意图类型：咨询类/行为判断类/混合类")
     extracted_keywords: List[str] = Field(default=[], description="提取的关键词")
     behavior_analysis: Optional[dict] = Field(default=None, description="行为分析结果（行为判断类使用）")
+    can_judge: Optional[bool] = Field(default=True, description="是否能够判断（行为判断类使用）")
     
     # 意图处理节点输出字段
     refined_query: str = Field(default="", description="优化后的查询语句")
@@ -51,7 +52,62 @@ class IntentRecognitionOutput(BaseModel):
     behavior_analysis: Optional[dict] = Field(default=None, description="行为分析结果（行为判断类或混合类使用）")
 
 
-# ==================== 知识库检索节点 ====================
+# ==================== 咨询类知识库检索节点 ====================
+class ConsultRetrievalInput(BaseModel):
+    """咨询类知识库检索节点的输入"""
+    user_query: str = Field(..., description="用户输入的查询问题")
+    extracted_keywords: List[str] = Field(default=[], description="提取的关键词")
+    refined_query: str = Field(default="", description="优化后的查询语句")
+    refined_keywords: List[str] = Field(default=[], description="优化后的关键词列表")
+    consult_focus: str = Field(default="", description="咨询焦点")
+
+
+class ConsultRetrievalOutput(BaseModel):
+    """咨询类知识库检索节点的输出"""
+    retrieval_results: List[dict] = Field(default=[], description="知识库检索结果（咨询类）")
+
+
+# ==================== 行为判断类知识库检索节点 ====================
+class JudgeRetrievalInput(BaseModel):
+    """行为判断类知识库检索节点的输入"""
+    user_query: str = Field(..., description="用户输入的查询问题")
+    extracted_keywords: List[str] = Field(default=[], description="提取的关键词")
+    behavior_analysis: Optional[dict] = Field(default=None, description="行为分析结果")
+    refined_query: str = Field(default="", description="优化后的查询语句")
+    refined_keywords: List[str] = Field(default=[], description="优化后的关键词列表")
+    behavior_subject: str = Field(default="", description="行为主体")
+    behavior_action: str = Field(default="", description="行为动作")
+    behavior_object: str = Field(default="", description="涉及对象")
+
+
+class JudgeRetrievalOutput(BaseModel):
+    """行为判断类知识库检索节点的输出"""
+    retrieval_results: List[dict] = Field(default=[], description="知识库检索结果（行为判断类）")
+    can_judge: bool = Field(default=True, description="是否能够判断（高分>=0.65时为True）")
+
+
+# ==================== 混合类知识库检索节点 ====================
+class MixedRetrievalInput(BaseModel):
+    """混合类知识库检索节点的输入"""
+    user_query: str = Field(..., description="用户输入的查询问题")
+    extracted_keywords: List[str] = Field(default=[], description="提取的关键词")
+    behavior_analysis: Optional[dict] = Field(default=None, description="行为分析结果")
+    consult_query: str = Field(default="", description="咨询部分的查询语句")
+    consult_keywords: List[str] = Field(default=[], description="咨询部分的关键词")
+    consult_focus: str = Field(default="", description="咨询焦点")
+    judge_query: str = Field(default="", description="判断部分的查询语句")
+    judge_keywords: List[str] = Field(default=[], description="判断部分的关键词")
+    behavior_subject: str = Field(default="", description="行为主体")
+    behavior_action: str = Field(default="", description="行为动作")
+    behavior_object: str = Field(default="", description="涉及对象")
+
+
+class MixedRetrievalOutput(BaseModel):
+    """混合类知识库检索节点的输出"""
+    retrieval_results: List[dict] = Field(default=[], description="知识库检索结果（混合类）")
+
+
+# ==================== 知识库检索节点（保留兼容） ====================
 class KnowledgeRetrievalInput(BaseModel):
     """知识库检索节点的输入"""
     user_query: str = Field(..., description="用户输入的查询问题")
@@ -72,6 +128,7 @@ class ResponseGenerationInput(BaseModel):
     intent_type: str = Field(..., description="识别到的意图类型")
     retrieval_results: List[dict] = Field(default=[], description="知识库检索结果")
     behavior_analysis: Optional[dict] = Field(default=None, description="行为分析结果")
+    can_judge: Optional[bool] = Field(default=True, description="是否能够判断（仅行为判断类）")
 
 
 class ResponseGenerationOutput(BaseModel):

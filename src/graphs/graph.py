@@ -9,7 +9,9 @@ from graphs.node import (
     consult_process_node,
     judge_process_node,
     mixed_process_node,
-    knowledge_retrieval_node,
+    consult_retrieval_node,
+    judge_retrieval_node,
+    mixed_retrieval_node,
     response_generation_node
 )
 
@@ -43,7 +45,12 @@ builder.add_node("judge_process", judge_process_node,
                 metadata={"type": "agent", "llm_cfg": "config/judge_process_cfg.json"})
 builder.add_node("mixed_process", mixed_process_node,
                 metadata={"type": "agent", "llm_cfg": "config/mixed_process_cfg.json"})
-builder.add_node("knowledge_retrieval", knowledge_retrieval_node)
+
+# 三个知识库检索节点（针对不同意图类型）
+builder.add_node("consult_retrieval", consult_retrieval_node)
+builder.add_node("judge_retrieval", judge_retrieval_node)
+builder.add_node("mixed_retrieval", mixed_retrieval_node)
+
 builder.add_node("response_generation", response_generation_node,
                 metadata={"type": "agent", "llm_cfg": "config/response_generation_cfg.json"})
 
@@ -61,13 +68,15 @@ builder.add_conditional_edges(
     }
 )
 
-# 三个处理分支都汇聚到知识库检索
-builder.add_edge("consult_process", "knowledge_retrieval")
-builder.add_edge("judge_process", "knowledge_retrieval")
-builder.add_edge("mixed_process", "knowledge_retrieval")
+# 三个处理分支分别路由到对应的检索节点
+builder.add_edge("consult_process", "consult_retrieval")
+builder.add_edge("judge_process", "judge_retrieval")
+builder.add_edge("mixed_process", "mixed_retrieval")
 
-# 添加后续边
-builder.add_edge("knowledge_retrieval", "response_generation")
+# 三个检索节点都汇聚到响应生成
+builder.add_edge("consult_retrieval", "response_generation")
+builder.add_edge("judge_retrieval", "response_generation")
+builder.add_edge("mixed_retrieval", "response_generation")
 builder.add_edge("response_generation", END)
 
 # 编译图
