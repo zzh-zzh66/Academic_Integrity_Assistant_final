@@ -186,3 +186,76 @@ class MixedProcessOutput(BaseModel):
     behavior_action: str = Field(..., description="行为动作")
     behavior_object: str = Field(..., description="涉及对象")
 
+
+# ==================== 咨询类扩展节点 ====================
+class ConsultContextExpandInput(BaseModel):
+    """咨询类扩展节点的输入"""
+    retrieval_results: List[dict] = Field(..., description="知识库检索结果")
+    user_query: str = Field(..., description="用户输入的查询问题")
+
+
+class ConsultContextExpandOutput(BaseModel):
+    """咨询类扩展节点的输出"""
+    expanded_results: List[dict] = Field(..., description="扩展后的检索结果（500-800字）")
+
+
+# ==================== 咨询类重排序节点 ====================
+class ConsultRerankInput(BaseModel):
+    """咨询类重排序节点的输入"""
+    expanded_results: List[dict] = Field(..., description="扩展后的检索结果")
+    user_query: str = Field(..., description="用户输入的查询问题")
+
+
+class ConsultRerankOutput(BaseModel):
+    """咨询类重排序节点的输出"""
+    retrieval_results: List[dict] = Field(..., description="重排序后的检索结果（top 5）")
+
+
+# ==================== 行为判断类扩展节点 ====================
+class JudgeContextExpandInput(BaseModel):
+    """行为判断类扩展节点的输入"""
+    retrieval_results: List[dict] = Field(..., description="知识库检索结果")
+    user_query: str = Field(..., description="用户输入的查询问题")
+
+
+class JudgeContextExpandOutput(BaseModel):
+    """行为判断类扩展节点的输出"""
+    expanded_results: List[dict] = Field(..., description="扩展后的检索结果（300-500字）")
+
+
+# ==================== 行为判断类重排序节点 ====================
+class JudgeRerankInput(BaseModel):
+    """行为判断类重排序节点的输入"""
+    expanded_results: List[dict] = Field(..., description="扩展后的检索结果")
+    user_query: str = Field(..., description="用户输入的查询问题")
+
+
+class JudgeRerankOutput(BaseModel):
+    """行为判断类重排序节点的输出"""
+    retrieval_results: List[dict] = Field(..., description="重排序后的检索结果（top 3）")
+    can_judge: bool = Field(default=True, description="是否能够判断")
+
+
+# ==================== 混合类扩展节点 ====================
+class MixedContextExpandInput(BaseModel):
+    """混合类扩展节点的输入"""
+    retrieval_results: List[dict] = Field(..., description="知识库检索结果")
+    user_query: str = Field(..., description="用户输入的查询问题")
+
+
+class MixedContextExpandOutput(BaseModel):
+    """混合类扩展节点的输出"""
+    expanded_results: List[dict] = Field(..., description="扩展后的检索结果（咨询500-800字，判断300-500字）")
+
+
+# ==================== 混合类重排序节点 ====================
+class MixedRerankInput(BaseModel):
+    """混合类重排序节点的输入"""
+    expanded_results: List[dict] = Field(..., description="扩展后的检索结果")
+    user_query: str = Field(..., description="用户输入的查询问题")
+
+
+class MixedRerankOutput(BaseModel):
+    """混合类重排序节点的输出"""
+    retrieval_results: List[dict] = Field(..., description="重排序后的检索结果（top 5）")
+

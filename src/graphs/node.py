@@ -26,7 +26,19 @@ from graphs.state import (
     JudgeProcessInput,
     JudgeProcessOutput,
     MixedProcessInput,
-    MixedProcessOutput
+    MixedProcessOutput,
+    ConsultContextExpandInput,
+    ConsultContextExpandOutput,
+    ConsultRerankInput,
+    ConsultRerankOutput,
+    JudgeContextExpandInput,
+    JudgeContextExpandOutput,
+    JudgeRerankInput,
+    JudgeRerankOutput,
+    MixedContextExpandInput,
+    MixedContextExpandOutput,
+    MixedRerankInput,
+    MixedRerankOutput
 )
 
 
@@ -216,6 +228,460 @@ def extract_file_name_from_content(content: str) -> str:
     return ""
 
 
+def expand_content_around_chunk(chunk_content: str, target_length: int) -> str:
+    """
+    扩展 chunk 内容，扩展到语义完整单元
+    
+    Args:
+        chunk_content: 原始 chunk 内容
+        target_length: 目标长度（字符数）
+    
+    Returns:
+        扩展后的内容
+    """
+    # 如果内容已经足够长，直接返回
+    if len(chunk_content) >= target_length * 0.8:
+        return chunk_content
+    
+    # 尝试按段落扩展
+    paragraphs = re.split(r'\n\n+', chunk_content)
+    
+    # 如果只有一个段落或无法分割，尝试按句子扩展
+    if len(paragraphs) <= 1:
+        # 按句子分割（句号、问号、感叹号）
+        sentences = re.split(r'([。！？])', chunk_content)
+        
+        # 重构句子列表
+        full_sentences = []
+        for i in range(0, len(sentences) - 1, 2):
+            if i + 1 < len(sentences):
+                full_sentences.append(sentences[i] + sentences[i + 1])
+        
+        # 如果有多个句子，尝试扩展
+        if len(full_sentences) > 1:
+            # 尝试扩展到目标长度
+            expanded = chunk_content
+            sentence_count = len(full_sentences)
+            
+            # 从中心向两端扩展
+            center_idx = sentence_count // 2
+            result_sentences = full_sentences
+            
+            # 如果原始内容不是从第一个句子开始的，尝试扩展
+            if chunk_content.startswith(full_sentences[0]):
+                # 从第一个句子开始，向后扩展
+                expanded_text = ""
+                for i, sentence in enumerate(result_sentences):
+                    expanded_text += sentence
+                    if len(expanded_text) >= target_length:
+                        return expanded_text[:target_length]
+                return expanded_text
+            else:
+                # 尝试扩展到目标长度
+                return chunk_content
+        else:
+            return chunk_content
+    else:
+        # 有多个段落，尝试扩展到目标长度
+        expanded = ""
+        for para in paragraphs:
+            expanded += para + "\n\n"
+            if len(expanded) >= target_length:
+                # 截断到目标长度
+                result = expanded[:target_length]
+                # 确保在段落边界截断
+                last_newline = result.rfind("\n\n")
+                if last_newline > target_length * 0.5:
+                    result = result[:last_newline]
+                return result.strip()
+        return expanded.strip()
+    
+    return chunk_content
+
+
+def consult_context_expand_node(
+    state: ConsultContextExpandInput,
+    config: RunnableConfig,
+    runtime: Runtime[Context]
+) -> ConsultContextExpandOutput:
+    """
+    title: 咨询类上下文扩展
+    desc: 扩展咨询类检索结果，获取完整段落（500-800字）
+    """
+    ctx = runtime.context
+    
+    try:
+        expanded_results = []
+        
+        for result in state.retrieval_results:
+            original_content = result.get("content", "")
+            
+            # 扩展内容到 500-800 字
+            expanded_content = expand_content_around_chunk(original_content, target_length=650)
+            
+            expanded_results.append({
+                "content": expanded_content,
+                "score": result.get("score", 0.0),
+                "doc_id": result.get("doc_id", ""),
+                "file_name": result.get("file_name", "")
+            })
+        
+        return ConsultContextExpandOutput(
+            expanded_results=expanded_results
+        )
+        
+    except Exception as e:
+        # 发生错误时返回原始结果
+        return ConsultContextExpandOutput(
+            expanded_results=state.retrieval_results
+        )
+
+
+def judge_context_expand_node(
+    state: JudgeContextExpandInput,
+    config: RunnableConfig,
+    runtime: Runtime[Context]
+) -> JudgeContextExpandOutput:
+    """
+    title: 行为判断类上下文扩展
+    desc: 扩展行为判断类检索结果，获取完整条款（300-500字）
+    """
+    ctx = runtime.context
+    
+    try:
+        expanded_results = []
+        
+        for result in state.retrieval_results:
+            original_content = result.get("content", "")
+            
+            # 扩展内容到 300-500 字
+            expanded_content = expand_content_around_chunk(original_content, target_length=400)
+            
+            expanded_results.append({
+                "content": expanded_content,
+                "score": result.get("score", 0.0),
+                "doc_id": result.get("doc_id", ""),
+                "file_name": result.get("file_name", "")
+            })
+        
+        return JudgeContextExpandOutput(
+            expanded_results=expanded_results
+        )
+        
+    except Exception as e:
+        # 发生错误时返回原始结果
+        return JudgeContextExpandOutput(
+            expanded_results=state.retrieval_results
+        )
+
+
+def mixed_context_expand_node(
+    state: MixedContextExpandInput,
+    config: RunnableConfig,
+    runtime: Runtime[Context]
+) -> MixedContextExpandOutput:
+    """
+    title: 混合类上下文扩展
+    desc: 扩展混合类检索结果，咨询路扩展到段落（500-800字），判断路扩展到条款（300-500字）
+    """
+    ctx = runtime.context
+    
+    try:
+        expanded_results = []
+        
+        for result in state.retrieval_results:
+            original_content = result.get("content", "")
+            source = result.get("source", "consult")
+            
+            # 根据来源类型决定扩展长度
+            if source == "consult":
+                # 咨询路扩展到 500-800 字
+                expanded_content = expand_content_around_chunk(original_content, target_length=650)
+            else:
+                # 判断路扩展到 300-500 字
+                expanded_content = expand_content_around_chunk(original_content, target_length=400)
+            
+            expanded_results.append({
+                "content": expanded_content,
+                "score": result.get("score", 0.0),
+                "doc_id": result.get("doc_id", ""),
+                "file_name": result.get("file_name", ""),
+                "source": source
+            })
+        
+        return MixedContextExpandOutput(
+            expanded_results=expanded_results
+        )
+        
+    except Exception as e:
+        # 发生错误时返回原始结果
+        return MixedContextExpandOutput(
+            expanded_results=state.retrieval_results
+        )
+
+
+def consult_rerank_node(
+    state: ConsultRerankInput,
+    config: RunnableConfig,
+    runtime: Runtime[Context]
+) -> ConsultRerankOutput:
+    """
+    title: 咨询类重排序
+    desc: 对咨询类扩展结果进行多维度评分和排序，筛选出最相关的 5 条结果
+    integrations: 大语言模型
+    """
+    ctx = runtime.context
+    
+    try:
+        # 读取配置文件
+        cfg_file = os.path.join(os.getenv("COZE_WORKSPACE_PATH"), config['metadata']['llm_cfg'])
+        with open(cfg_file, 'r', encoding='utf-8') as fd:
+            _cfg = json.load(fd)
+        
+        llm_config = _cfg.get("config", {})
+        sp = _cfg.get("sp", "")
+        up_tpl = Template(_cfg.get("up", ""))
+        
+        # 渲染用户提示词
+        user_prompt_content = up_tpl.render({
+            "user_query": state.user_query,
+            "expanded_results": state.expanded_results
+        })
+        
+        # 调用大语言模型
+        client = LLMClient(ctx=ctx)
+        
+        messages = [
+            {"role": "system", "content": sp},
+            {"role": "user", "content": user_prompt_content}
+        ]
+        
+        response = client.invoke(
+            messages=messages,
+            model=llm_config.get("model", "doubao-seed-1-8-251228"),
+            temperature=llm_config.get("temperature", 0.1),
+            top_p=llm_config.get("top_p", 0.9),
+            max_completion_tokens=llm_config.get("max_completion_tokens", 2000),
+            thinking=llm_config.get("thinking", "disabled")
+        )
+        
+        # 提取响应内容
+        response_text = ""
+        if isinstance(response.content, str):
+            response_text = response.content
+        elif isinstance(response.content, list):
+            for item in response.content:
+                if isinstance(item, dict) and item.get("type") == "text":
+                    response_text += item.get("text", "")
+                elif isinstance(item, str):
+                    response_text += item
+        
+        response_text = response_text.strip()
+        
+        # 解析 JSON 响应
+        try:
+            # 提取 JSON 内容
+            json_start = response_text.find("{")
+            json_end = response_text.rfind("}") + 1
+            
+            if json_start >= 0 and json_end > json_start:
+                json_str = response_text[json_start:json_end]
+                result_json = json.loads(json_str)
+                ranked_results = result_json.get("ranked_results", [])
+            else:
+                # 无法解析 JSON，返回原始结果
+                ranked_results = state.expanded_results[:5]
+        except Exception as e:
+            # 解析失败，返回原始结果
+            ranked_results = state.expanded_results[:5]
+        
+        return ConsultRerankOutput(
+            retrieval_results=ranked_results
+        )
+        
+    except Exception as e:
+        # 发生错误时返回前 5 条原始结果
+        return ConsultRerankOutput(
+            retrieval_results=state.expanded_results[:5]
+        )
+
+
+def judge_rerank_node(
+    state: JudgeRerankInput,
+    config: RunnableConfig,
+    runtime: Runtime[Context]
+) -> JudgeRerankOutput:
+    """
+    title: 行为判断类重排序
+    desc: 对行为判断类扩展结果进行高精度评分和排序，筛选出最相关的 3 条结果
+    integrations: 大语言模型
+    """
+    ctx = runtime.context
+    
+    try:
+        # 读取配置文件
+        cfg_file = os.path.join(os.getenv("COZE_WORKSPACE_PATH"), config['metadata']['llm_cfg'])
+        with open(cfg_file, 'r', encoding='utf-8') as fd:
+            _cfg = json.load(fd)
+        
+        llm_config = _cfg.get("config", {})
+        sp = _cfg.get("sp", "")
+        up_tpl = Template(_cfg.get("up", ""))
+        
+        # 渲染用户提示词
+        user_prompt_content = up_tpl.render({
+            "user_query": state.user_query,
+            "expanded_results": state.expanded_results
+        })
+        
+        # 调用大语言模型
+        client = LLMClient(ctx=ctx)
+        
+        messages = [
+            {"role": "system", "content": sp},
+            {"role": "user", "content": user_prompt_content}
+        ]
+        
+        response = client.invoke(
+            messages=messages,
+            model=llm_config.get("model", "doubao-seed-1-8-251228"),
+            temperature=llm_config.get("temperature", 0.0),
+            top_p=llm_config.get("top_p", 0.9),
+            max_completion_tokens=llm_config.get("max_completion_tokens", 2000),
+            thinking=llm_config.get("thinking", "disabled")
+        )
+        
+        # 提取响应内容
+        response_text = ""
+        if isinstance(response.content, str):
+            response_text = response.content
+        elif isinstance(response.content, list):
+            for item in response.content:
+                if isinstance(item, dict) and item.get("type") == "text":
+                    response_text += item.get("text", "")
+                elif isinstance(item, str):
+                    response_text += item
+        
+        response_text = response_text.strip()
+        
+        # 解析 JSON 响应
+        try:
+            # 提取 JSON 内容
+            json_start = response_text.find("{")
+            json_end = response_text.rfind("}") + 1
+            
+            if json_start >= 0 and json_end > json_start:
+                json_str = response_text[json_start:json_end]
+                result_json = json.loads(json_str)
+                ranked_results = result_json.get("ranked_results", [])
+                can_judge = result_json.get("can_judge", True)
+            else:
+                # 无法解析 JSON，返回原始结果
+                ranked_results = state.expanded_results[:3]
+                can_judge = len(state.expanded_results) > 0
+        except Exception as e:
+            # 解析失败，返回原始结果
+            ranked_results = state.expanded_results[:3]
+            can_judge = len(state.expanded_results) > 0
+        
+        return JudgeRerankOutput(
+            retrieval_results=ranked_results,
+            can_judge=can_judge
+        )
+        
+    except Exception as e:
+        # 发生错误时返回前 3 条原始结果，并标记为无法判断
+        return JudgeRerankOutput(
+            retrieval_results=state.expanded_results[:3],
+            can_judge=False
+        )
+
+
+def mixed_rerank_node(
+    state: MixedRerankInput,
+    config: RunnableConfig,
+    runtime: Runtime[Context]
+) -> MixedRerankOutput:
+    """
+    title: 混合类重排序
+    desc: 对混合类扩展结果进行多维度评分和排序，筛选出最相关的 5 条结果
+    integrations: 大语言模型
+    """
+    ctx = runtime.context
+    
+    try:
+        # 读取配置文件
+        cfg_file = os.path.join(os.getenv("COZE_WORKSPACE_PATH"), config['metadata']['llm_cfg'])
+        with open(cfg_file, 'r', encoding='utf-8') as fd:
+            _cfg = json.load(fd)
+        
+        llm_config = _cfg.get("config", {})
+        sp = _cfg.get("sp", "")
+        up_tpl = Template(_cfg.get("up", ""))
+        
+        # 渲染用户提示词
+        user_prompt_content = up_tpl.render({
+            "user_query": state.user_query,
+            "expanded_results": state.expanded_results
+        })
+        
+        # 调用大语言模型
+        client = LLMClient(ctx=ctx)
+        
+        messages = [
+            {"role": "system", "content": sp},
+            {"role": "user", "content": user_prompt_content}
+        ]
+        
+        response = client.invoke(
+            messages=messages,
+            model=llm_config.get("model", "doubao-seed-1-8-251228"),
+            temperature=llm_config.get("temperature", 0.1),
+            top_p=llm_config.get("top_p", 0.9),
+            max_completion_tokens=llm_config.get("max_completion_tokens", 2500),
+            thinking=llm_config.get("thinking", "disabled")
+        )
+        
+        # 提取响应内容
+        response_text = ""
+        if isinstance(response.content, str):
+            response_text = response.content
+        elif isinstance(response.content, list):
+            for item in response.content:
+                if isinstance(item, dict) and item.get("type") == "text":
+                    response_text += item.get("text", "")
+                elif isinstance(item, str):
+                    response_text += item
+        
+        response_text = response_text.strip()
+        
+        # 解析 JSON 响应
+        try:
+            # 提取 JSON 内容
+            json_start = response_text.find("{")
+            json_end = response_text.rfind("}") + 1
+            
+            if json_start >= 0 and json_end > json_start:
+                json_str = response_text[json_start:json_end]
+                result_json = json.loads(json_str)
+                ranked_results = result_json.get("ranked_results", [])
+            else:
+                # 无法解析 JSON，返回原始结果
+                ranked_results = state.expanded_results[:5]
+        except Exception as e:
+            # 解析失败，返回原始结果
+            ranked_results = state.expanded_results[:5]
+        
+        return MixedRerankOutput(
+            retrieval_results=ranked_results
+        )
+        
+    except Exception as e:
+        # 发生错误时返回前 5 条原始结果
+        return MixedRerankOutput(
+            retrieval_results=state.expanded_results[:5]
+        )
+
 def consult_retrieval_node(
     state: ConsultRetrievalInput,
     config: RunnableConfig,
@@ -255,8 +721,8 @@ def consult_retrieval_node(
         # 执行检索：咨询类需要更多信息，降低阈值
         response = client.search(
             query=query,
-            top_k=7,
-            min_score=0.4
+            top_k=15,
+            min_score=0.3
         )
         
         # 处理检索结果
@@ -324,11 +790,11 @@ def judge_retrieval_node(
             keywords_str = " ".join(keywords)
             query = f"{query} {keywords_str}"
         
-        # 执行检索：行为判断类需要高精度，提高阈值
+        # 执行检索：行为判断类需要更多候选用于后续筛选
         response = client.search(
             query=query,
-            top_k=3,
-            min_score=0.65
+            top_k=15,
+            min_score=0.5
         )
         
         # 处理检索结果
@@ -337,7 +803,7 @@ def judge_retrieval_node(
         
         if response.code == 0 and response.chunks:
             # 检查最高分是否达到阈值
-            if response.chunks and response.chunks[0].score < 0.65:
+            if response.chunks and response.chunks[0].score < 0.5:
                 can_judge = False
             
             for chunk in response.chunks:
@@ -394,8 +860,8 @@ def mixed_retrieval_node(
         
         consult_response = client.search(
             query=consult_query,
-            top_k=7,
-            min_score=0.4
+            top_k=15,
+            min_score=0.3
         )
         
         if consult_response.code == 0 and consult_response.chunks:
@@ -428,8 +894,8 @@ def mixed_retrieval_node(
         
         judge_response = client.search(
             query=judge_query,
-            top_k=3,
-            min_score=0.6
+            top_k=15,
+            min_score=0.5
         )
         
         if judge_response.code == 0 and judge_response.chunks:

@@ -12,6 +12,12 @@ from graphs.node import (
     consult_retrieval_node,
     judge_retrieval_node,
     mixed_retrieval_node,
+    consult_context_expand_node,
+    consult_rerank_node,
+    judge_context_expand_node,
+    judge_rerank_node,
+    mixed_context_expand_node,
+    mixed_rerank_node,
     response_generation_node
 )
 
@@ -51,6 +57,19 @@ builder.add_node("consult_retrieval", consult_retrieval_node)
 builder.add_node("judge_retrieval", judge_retrieval_node)
 builder.add_node("mixed_retrieval", mixed_retrieval_node)
 
+# 三个上下文扩展节点
+builder.add_node("consult_context_expand", consult_context_expand_node)
+builder.add_node("judge_context_expand", judge_context_expand_node)
+builder.add_node("mixed_context_expand", mixed_context_expand_node)
+
+# 三个重排序节点
+builder.add_node("consult_rerank", consult_rerank_node,
+                metadata={"type": "agent", "llm_cfg": "config/consult_rerank_cfg.json"})
+builder.add_node("judge_rerank", judge_rerank_node,
+                metadata={"type": "agent", "llm_cfg": "config/judge_rerank_cfg.json"})
+builder.add_node("mixed_rerank", mixed_rerank_node,
+                metadata={"type": "agent", "llm_cfg": "config/mixed_rerank_cfg.json"})
+
 builder.add_node("response_generation", response_generation_node,
                 metadata={"type": "agent", "llm_cfg": "config/response_generation_cfg.json"})
 
@@ -73,10 +92,20 @@ builder.add_edge("consult_process", "consult_retrieval")
 builder.add_edge("judge_process", "judge_retrieval")
 builder.add_edge("mixed_process", "mixed_retrieval")
 
-# 三个检索节点都汇聚到响应生成
-builder.add_edge("consult_retrieval", "response_generation")
-builder.add_edge("judge_retrieval", "response_generation")
-builder.add_edge("mixed_retrieval", "response_generation")
+# 检索节点 → 扩展节点
+builder.add_edge("consult_retrieval", "consult_context_expand")
+builder.add_edge("judge_retrieval", "judge_context_expand")
+builder.add_edge("mixed_retrieval", "mixed_context_expand")
+
+# 扩展节点 → 重排序节点
+builder.add_edge("consult_context_expand", "consult_rerank")
+builder.add_edge("judge_context_expand", "judge_rerank")
+builder.add_edge("mixed_context_expand", "mixed_rerank")
+
+# 三个重排序节点都汇聚到响应生成
+builder.add_edge("consult_rerank", "response_generation")
+builder.add_edge("judge_rerank", "response_generation")
+builder.add_edge("mixed_rerank", "response_generation")
 builder.add_edge("response_generation", END)
 
 # 编译图
