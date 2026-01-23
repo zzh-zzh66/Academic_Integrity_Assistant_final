@@ -19,7 +19,19 @@ from graphs.nodes import (
     judge_query_optimize_node,
     judge_retrieval_enhanced_node,
     judge_context_expand_enhanced_node,
-    judge_decision_node
+    judge_decision_node,
+    mixed_split_node,
+    mixed_merge_node
+)
+from graphs.nodes.mixed.mixed_consult_wrapper import (
+    mixed_consult_query_optimize_wrapper,
+    mixed_consult_retrieval_loop_wrapper
+)
+from graphs.nodes.mixed.mixed_judge_wrapper import (
+    mixed_judge_query_optimize_wrapper,
+    mixed_judge_retrieval_enhanced_wrapper,
+    mixed_judge_context_expand_enhanced_wrapper,
+    mixed_judge_decision_wrapper
 )
 from graphs.nodes.consult_loop import consult_retrieval_loop_node
 
@@ -84,6 +96,26 @@ builder.add_node("judge_decision", judge_decision_node,
 builder.add_node("response_generation", response_generation_node,
                 metadata={"type": "agent", "llm_cfg": "config/response_generation_cfg.json"})
 
+# 🆕 混合类并行节点
+builder.add_node("mixed_split", mixed_split_node,
+                metadata={"type": "agent", "llm_cfg": "config/nodes/mixed/mixed_split_cfg.json"})
+builder.add_node("mixed_merge", mixed_merge_node,
+                metadata={"type": "agent", "llm_cfg": "config/nodes/mixed/mixed_merge_cfg.json"})
+
+# 🆕 混合类咨询分支包装节点
+builder.add_node("mixed_consult_query_optimize", mixed_consult_query_optimize_wrapper,
+                metadata={"type": "agent", "llm_cfg": "config/nodes/consult/consult_query_optimize_cfg.json"})
+builder.add_node("mixed_consult_retrieval_loop", mixed_consult_retrieval_loop_wrapper,
+                metadata={"type": "looparray"})
+
+# 🆕 混合类行为判断分支包装节点
+builder.add_node("mixed_judge_query_optimize", mixed_judge_query_optimize_wrapper,
+                metadata={"type": "agent", "llm_cfg": "config/nodes/judge/judge_query_optimize_cfg.json"})
+builder.add_node("mixed_judge_retrieval_enhanced", mixed_judge_retrieval_enhanced_wrapper)
+builder.add_node("mixed_judge_context_expand_enhanced", mixed_judge_context_expand_enhanced_wrapper)
+builder.add_node("mixed_judge_decision", mixed_judge_decision_wrapper,
+                metadata={"type": "agent", "llm_cfg": "config/nodes/judge/judge_decision_cfg.json"})
+
 # 设置入口点
 builder.set_entry_point("complexity")
 
@@ -112,8 +144,18 @@ builder.add_edge("judge_query_optimize", "judge_retrieval_enhanced")  # 增强�
 builder.add_edge("judge_retrieval_enhanced", "judge_context_expand_enhanced")  # 拓宽上下文
 builder.add_edge("judge_context_expand_enhanced", "judge_decision")  # 违规判断
 
-# 🚫 混合类分支：暂时跳过，直接到响应生成（待后续实现并行架构）
-builder.add_edge("mixed_process", "response_generation")
+# 🆕 混合类分支：并行架构
+builder.add_edge("mixed_process", "mixed_split")  # 混合类处理 → 问题拆分
+
+# 混合类：拆分后顺序处理（咨询分支优先）
+builder.add_edge("mixed_split", "mixed_consult_query_optimize")  # 拆分 → 咨询查询优化
+builder.add_edge("mixed_consult_query_optimize", "mixed_consult_retrieval_loop")  # 咨询查询优化 → 咨询循环检索
+builder.add_edge("mixed_consult_retrieval_loop", "mixed_judge_query_optimize")  # 咨询循环检索完成 → 行为判断查询优化
+builder.add_edge("mixed_judge_query_optimize", "mixed_judge_retrieval_enhanced")  # 行为判断查询优化 → 增强检索
+builder.add_edge("mixed_judge_retrieval_enhanced", "mixed_judge_context_expand_enhanced")  # 增强检索 → 拓宽上下文
+builder.add_edge("mixed_judge_context_expand_enhanced", "mixed_judge_decision")  # 拓宽上下文 → 违规判断
+builder.add_edge("mixed_judge_decision", "mixed_merge")  # 行为判断分支完成 → 结果整合
+builder.add_edge("mixed_merge", "response_generation")  # 整合结果 → 响应生成
 
 # 咨询类、行为判断类的检索结果都汇聚到响应生成
 builder.add_edge("consult_retrieval_loop", "response_generation")

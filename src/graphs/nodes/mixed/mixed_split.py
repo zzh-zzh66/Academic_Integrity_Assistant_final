@@ -1,12 +1,14 @@
 import os
 import json
-import re
+import logging
 import re
 from jinja2 import Template
 from langchain_core.runnables import RunnableConfig
 from langgraph.runtime import Runtime
 from coze_coding_utils.runtime_ctx.context import Context
 from coze_coding_dev_sdk import LLMClient, KnowledgeClient
+
+logger = logging.getLogger(__name__)
 
 from graphs.state import (
     MixedSplitInput,
@@ -108,7 +110,10 @@ def mixed_split_node(
                 "max_rounds": 2,
                 "target_score": 0.65,
                 "min_score_threshold": 0.65
-            }
+            },
+            # 拆分质量
+            "split_confidence": 0.7,
+            "split_reason": "默认拆分：将完整查询作为判断部分，咨询部分为空"
         }
         
         # 尝试提取JSON内容
@@ -138,6 +143,11 @@ def mixed_split_node(
                     result["behavior_object"] = parsed_result["behavior_object"]
                 if "retrieval_strategy_judge" in parsed_result:
                     result["retrieval_strategy_judge"] = parsed_result["retrieval_strategy_judge"]
+                # 拆分质量
+                if "split_confidence" in parsed_result:
+                    result["split_confidence"] = parsed_result["split_confidence"]
+                if "split_reason" in parsed_result:
+                    result["split_reason"] = parsed_result["split_reason"]
             except json.JSONDecodeError:
                 pass
         
@@ -151,7 +161,12 @@ def mixed_split_node(
             behavior_subject=result["behavior_subject"],
             behavior_action=result["behavior_action"],
             behavior_object=result["behavior_object"],
-            retrieval_strategy_judge=result["retrieval_strategy_judge"]
+            retrieval_strategy_judge=result["retrieval_strategy_judge"],
+            split_confidence=result["split_confidence"],
+            split_reason=result["split_reason"],
+            # 额外写入的字段，用于咨询和行为判断分支的输入
+            refined_query=result["consult_query"] if result["consult_query"] else state.user_query,
+            refined_keywords=result["consult_keywords"] if result["consult_keywords"] else state.extracted_keywords
         )
         
     except Exception as e:
@@ -182,7 +197,9 @@ def mixed_split_node(
                 "max_rounds": 2,
                 "target_score": 0.65,
                 "min_score_threshold": 0.65
-            }
+            },
+            split_confidence=0.5,
+            split_reason="拆分失败，使用默认配置"
         )
 
 

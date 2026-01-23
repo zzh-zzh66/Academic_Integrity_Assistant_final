@@ -34,6 +34,13 @@ class GlobalState(BaseModel):
     judge_retrieval_results: List[dict] = Field(default=[], description="判断部分检索结果（混合类使用）")
     retrieval_strategy_consult: dict = Field(default={}, description="咨询部分检索策略（混合类使用）")
     retrieval_strategy_judge: dict = Field(default={}, description="判断部分检索策略（混合类使用）")
+    
+    # 🆕 混合类并行处理结果
+    consult_branch_result: dict = Field(default={}, description="咨询分支的完整处理结果（用于混合类并行）")
+    judge_branch_result: dict = Field(default={}, description="行为判断分支的完整处理结果（用于混合类并行）")
+    merged_result: dict = Field(default={}, description="混合类整合后的结果（JSON格式）")
+    split_confidence: float = Field(default=0.0, description="问题拆分置信度（0-1）")
+    split_reason: str = Field(default="", description="问题拆分原因说明")
 
     # 术语预处理节点输出字段
     standard_terms: List[str] = Field(default=[], description="识别到的标准化术语列表")
@@ -632,6 +639,12 @@ class MixedSplitOutput(BaseModel):
     behavior_action: str = Field(default="", description="行为动作")
     behavior_object: str = Field(default="", description="涉及对象")
     retrieval_strategy_judge: dict = Field(default={}, description="判断部分检索策略")
+    # 拆分质量
+    split_confidence: float = Field(default=0.8, description="拆分置信度（0-1）")
+    split_reason: str = Field(default="", description="拆分原因说明")
+    # 额外写入的字段（用于咨询和行为判断分支的输入）
+    refined_query: str = Field(default="", description="优化后的查询语句（咨询部分）")
+    refined_keywords: List[str] = Field(default=[], description="优化后的关键词列表（咨询部分）")
 
 
 class MixedMergeInput(BaseModel):
@@ -650,12 +663,15 @@ class MixedMergeInput(BaseModel):
 
 
 class MixedMergeOutput(BaseModel):
-    """混合类整合节点的输出"""
+    """混合类整合节点的输出（JSON格式）"""
+    # 整合后的结果
+    consult_part: dict = Field(default={}, description="咨询部分的完整结果")
+    judge_part: dict = Field(default={}, description="行为判断部分的完整结果")
+    summary: str = Field(default="", description="整体摘要")
+    overlap_analysis: dict = Field(default={}, description="重合内容分析")
+    # 用于响应生成节点的数据
     retrieval_results: List[dict] = Field(default=[], description="整合后的检索结果")
-    can_judge: bool = Field(default=True, description="是否能够判断")
-    is_violation: Optional[bool] = Field(default=None, description="是否违规")
-    judgment_basis: str = Field(default="", description="判断依据")
-    confidence_score: float = Field(default=0.0, description="判断置信度")
-    confidence_level: str = Field(default="medium", description="置信度等级")
+    judgment_result: dict = Field(default={}, description="判断结果（包含is_violation, can_judge, confidence_score等）")
+    merged_reason: str = Field(default="", description="整合原因说明")
 
 
