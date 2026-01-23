@@ -21,9 +21,17 @@ from graphs.nodes.consult import (
     consult_retrieval_node,
     consult_context_expand_node,
     consult_rerank_node,
+    # consult_retrieval_loop_node,  # 延迟导入，避免循环依赖
     consult_retrieval_loop_start_node,
     consult_retrieval_loop_end_node
 )
+
+# 延迟导入 consult_retrieval_loop_node
+def __getattr__(name: str):
+    if name == "consult_retrieval_loop_node":
+        from graphs.nodes.consult import consult_retrieval_loop_node
+        return consult_retrieval_loop_node
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 # 行为判断类节点
 from graphs.nodes.judge import (
@@ -57,6 +65,7 @@ __all__ = [
     "consult_retrieval_node",
     "consult_context_expand_node",
     "consult_rerank_node",
+    "consult_retrieval_loop_node",
     "consult_retrieval_loop_start_node",
     "consult_retrieval_loop_end_node",
     # 行为判断类节点

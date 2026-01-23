@@ -5,22 +5,12 @@ from coze_coding_utils.runtime_ctx.context import Context
 from graphs.state import (
     GlobalState,
     GraphInput,
-    GraphOutput,
-    ConsultRetrievalLoopStartInput,
-    ConsultRetrievalLoopStartOutput,
-    ConsultRetrievalLoopState,
-    ConsultRetrievalLoopEndInput,
-    ConsultRetrievalLoopEndOutput
+    GraphOutput
 )
 from graphs.nodes import (
     intent_recognition_node,
     term_preprocessing_node,
     consult_process_node,
-    consult_retrieval_node,
-    consult_context_expand_node,
-    consult_rerank_node,
-    consult_retrieval_loop_start_node,
-    consult_retrieval_loop_end_node,
     judge_process_node,
     mixed_process_node,
     judge_retrieval_node,
@@ -31,6 +21,7 @@ from graphs.nodes import (
     mixed_rerank_node,
     response_generation_node
 )
+from graphs.nodes.consult import consult_retrieval_loop_node
 
 
 def route_intent_type(state: GlobalState) -> str:
@@ -62,11 +53,9 @@ builder.add_node("term_preprocessing", term_preprocessing_node)
 builder.add_node("consult_process", consult_process_node,
                 metadata={"type": "agent", "llm_cfg": "config/consult_process_cfg.json"})
 
-# 咨询类循环检索节点（暂时使用原有线性流程，后续再集成循环）
-builder.add_node("consult_retrieval", consult_retrieval_node)
-builder.add_node("consult_context_expand", consult_context_expand_node)
-builder.add_node("consult_rerank", consult_rerank_node,
-                metadata={"type": "agent", "llm_cfg": "config/consult_rerank_cfg.json"})
+# 咨询类循环检索节点（通过调用子图实现，封装了consult_retrieval、consult_context_expand、consult_rerank三个节点）
+builder.add_node("consult_retrieval_loop", consult_retrieval_loop_node,
+                metadata={"type": "looparray"})
 
 builder.add_node("judge_process", judge_process_node,
                 metadata={"type": "agent", "llm_cfg": "config/judge_process_cfg.json"})
@@ -108,26 +97,16 @@ builder.add_conditional_edges(
 )
 
 # 三个处理分支分别路由到对应的检索节点
-builder.add_edge("consult_process", "consult_retrieval")  # 暂时使用原有流程
+builder.add_edge("consult_process", "consult_retrieval_loop")  # 咨询类使用循环检索
 builder.add_edge("judge_process", "judge_retrieval")
 builder.add_edge("mixed_process", "mixed_retrieval")
-
-# 咨询类检索节点 → 扩展节点
-builder.add_edge("consult_retrieval", "consult_context_expand")
 
 # 行为判断类和混合类的检索节点 → 扩展节点
 builder.add_edge("judge_retrieval", "judge_context_expand")
 builder.add_edge("mixed_retrieval", "mixed_context_expand")
 
-# 咨询类扩展节点 → 重排序节点
-builder.add_edge("consult_context_expand", "consult_rerank")
-
-# 行为判断类和混合类的扩展节点 → 重排序节点
-builder.add_edge("judge_context_expand", "judge_rerank")
-builder.add_edge("mixed_context_expand", "mixed_rerank")
-
-# 咨询类、行为判断类、混合类的重排序节点都汇聚到响应生成
-builder.add_edge("consult_rerank", "response_generation")
+# 咨询类、行为判断类、混合类的检索结果都汇聚到响应生成
+builder.add_edge("consult_retrieval_loop", "response_generation")
 builder.add_edge("judge_rerank", "response_generation")
 builder.add_edge("mixed_rerank", "response_generation")
 

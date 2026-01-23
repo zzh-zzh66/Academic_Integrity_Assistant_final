@@ -327,7 +327,66 @@ def consult_rerank_node(
         )
 
 
-# ==================== 咨询类循环检索节点 ====================
+# ==================== 咨询类循环检索节点（调用子图）====================
+
+def consult_retrieval_loop_node(
+    state: ConsultRetrievalInput,
+    config: RunnableConfig,
+    runtime: Runtime[Context]
+) -> ConsultRetrievalOutput:
+    """
+    title: 咨询类循环检索（调用子图）
+    desc: 通过调用子图实现咨询类的循环检索逻辑
+    integrations: 知识库, 大语言模型
+    """
+    # 导入子图
+    from graphs.loop_graph import consult_retrieval_subgraph
+    
+    # 1. 将父图状态转换为子图状态
+    subgraph_state = ConsultRetrievalLoopState(
+        user_query=state.user_query,
+        refined_query=state.refined_query,
+        refined_keywords=state.refined_keywords,
+        consult_focus=getattr(state, 'consult_focus', ''),
+        max_rounds=2,  # 最大轮次
+        target_score=0.8,  # 目标分数
+        min_score_threshold=0.65,  # 最低阈值
+        current_round=0,
+        previous_score=0.0,
+        current_score=0.0,
+        retrieval_results=[],
+        high_score_chunks=[],
+        exit_reason="",
+        previous_retrieval_results=[]
+    )
+    
+    # 2. 调用子图
+    # 动态导入子图，避免编译时循环检测
+    from graphs.loop_graph import create_consult_retrieval_subgraph
+    subgraph = create_consult_retrieval_subgraph()
+    subgraph_result_dict = subgraph.invoke(subgraph_state.model_dump())  # type: ignore[attribute-error]
+
+    # 3. 判断是否需要兜底回答
+    final_results = subgraph_result_dict.get("retrieval_results", [])
+
+    # 如果退出原因是 fallback 或 score_decreased，可能需要特殊处理
+    exit_reason = subgraph_result_dict.get("exit_reason", "")
+    if exit_reason == "fallback":
+        # 分数太低，使用空结果
+        final_results = []
+    elif exit_reason == "score_decreased":
+        # 分数下降，使用上一轮结果
+        previous_results = subgraph_result_dict.get("previous_retrieval_results", [])
+        if previous_results:
+            final_results = previous_results
+    
+    # 4. 将子图输出转换回父图状态
+    return ConsultRetrievalOutput(
+        retrieval_results=final_results
+    )
+
+
+# ==================== 咨询类循环检索节点（旧版本，已弃用）====================
 
 def consult_retrieval_loop_start_node(
     state: ConsultRetrievalLoopStartInput,

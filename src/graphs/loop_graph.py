@@ -1,168 +1,223 @@
 """
 循环检索子图定义
 包含咨询类的循环检索子图
+将consult_retrieval_node、consult_context_expand_node、consult_rerank_node封装成一个子图
 """
 
 import os
 import json
-from jinja2 import Template
-from langgraph.graph import StateGraph, END
+import re
 from typing import Literal
+from jinja2 import Template
+from pydantic import BaseModel, Field
+from langgraph.graph import StateGraph, END
 from langchain_core.runnables import RunnableConfig
 from langgraph.runtime import Runtime
 from coze_coding_utils.runtime_ctx.context import Context
 from coze_coding_dev_sdk import LLMClient, KnowledgeClient
 
-from graphs.state import (
-    ConsultRetrievalLoopState,
-    ConsultRetrievalInput,
-    ConsultRetrievalOutput,
-    ConsultContextExpandInput,
-    ConsultContextExpandOutput,
-    ConsultRerankInput,
-    ConsultRerankOutput
-)
 from graphs.nodes.common import (
+    extract_file_name_from_content,
+    expand_content_around_chunk,
     calculate_weighted_score,
     extract_top_k_chunks,
-    expand_content_around_chunk,
-    extract_file_name_from_content,
     get_fallback_response
 )
 
 
-# ==================== 咨询类循环检索包装器节点（内联实现）====================
+# ==================== 子图状态定义 ====================
 
-def consult_retrieval_loop_wrapper_node(
+class ConsultRetrievalLoopState(BaseModel):
+    """咨询类循环检索子图状态
+    
+    注意：此状态必须与GlobalState兼容，包含所有检索相关的字段
+    """
+    # ==================== 来自GlobalState的字段 ====================
+    user_query: str = Field(default="", description="用户输入的查询问题")
+    refined_query: str = Field(default="", description="优化后的查询语句")
+    refined_keywords: list = Field(default=[], description="优化后的关键词列表")
+    consult_focus: str = Field(default="", description="咨询焦点")
+    retrieval_results: list = Field(default=[], description="知识库检索结果")
+    
+    # ==================== 循环控制字段 ====================
+    max_rounds: int = Field(default=2, description="最大循环轮次")
+    target_score: float = Field(default=0.8, description="目标分数（达到即退出）")
+    min_score_threshold: float = Field(default=0.65, description="最低阈值（达到最大轮次后判断）")
+    
+    # ==================== 循环状态字段 ====================
+    current_round: int = Field(default=0, description="当前轮次")
+    previous_score: float = Field(default=0.0, description="上一轮分数")
+    current_score: float = Field(default=0.0, description="当前分数（加权求和）")
+    high_score_chunks: list = Field(default=[], description="top-3高分内容（用于下一轮上下文）")
+    exit_reason: str = Field(default="", description="退出原因：target_score_reached/score_decreased/max_rounds_reached/fallback")
+    previous_retrieval_results: list = Field(default=[], description="上一轮的检索结果（用于分数下降时回退）")
+
+
+# ==================== 包装节点：咨询类知识库检索 ====================
+
+def consult_retrieval_wrapper_node(
     state: ConsultRetrievalLoopState,
     config: RunnableConfig,
     runtime: Runtime[Context]
 ) -> ConsultRetrievalLoopState:
     """
-    title: 咨询类循环检索包装器
-    desc: 在子图中执行知识库检索
+    title: 咨询类知识库检索（子图节点）
+    desc: 根据咨询类意图检索学术道德规范相关内容
     integrations: 知识库
     """
     ctx = runtime.context
     
-    # 保存上一轮结果（用于分数下降时回退）
-    if state.current_round > 0:
-        previous_results = state.retrieval_results.copy()
-    else:
-        previous_results = []
-    
-    # 构建检索查询
-    query = state.refined_query
-    
-    # 如果是第二轮，添加top-3高分内容作为上下文
-    if state.current_round >= 1 and state.high_score_chunks:
-        context_parts = ["根据已检索到的优质内容："]
-        context_parts.extend(state.high_score_chunks)
-        context_parts.append(f"，请继续检索更多关于{query}的相关信息。")
-        query = " ".join(context_parts)
-    
-    # 添加关键词
-    if state.refined_keywords:
-        keywords_str = " ".join(state.refined_keywords)
-        query = f"{query} {keywords_str}"
-    
-    # 添加咨询类增强词
-    query = f"{query} 定义 要求 规范 说明"
-    
-    # 执行检索
-    client = KnowledgeClient(ctx=ctx)
-    response = client.search(
-        query=query,
-        top_k=10,
-        min_score=0.6
-    )
-    
-    # 处理检索结果
-    retrieval_results = []
-    if response.code == 0 and response.chunks:
-        for chunk in response.chunks:
-            retrieval_results.append({
-                "content": chunk.content,
-                "score": chunk.score,
-                "doc_id": chunk.doc_id,
-                "file_name": extract_file_name_from_content(chunk.content) if hasattr(chunk, 'content') else ""
-            })
-    
-    # 更新循环状态
-    updated_state = state.model_copy(deep=True)
-    updated_state.retrieval_results = retrieval_results
-    updated_state.previous_retrieval_results = previous_results
-    
-    return updated_state
+    try:
+        # 保存上一轮结果（用于分数下降时回退）
+        if state.current_round > 0:
+            previous_results = state.retrieval_results.copy()
+        else:
+            previous_results = []
+        
+        # 初始化知识库客户端
+        client = KnowledgeClient(ctx=ctx)
+        
+        # 构建检索查询
+        query = state.user_query
+        
+        # 优先使用优化后的查询
+        if state.refined_query:
+            query = state.refined_query
+        
+        # 添加咨询焦点（如果有）
+        if state.consult_focus:
+            query = f"{query} {state.consult_focus}"
+        
+        # 添加关键词（如果有）
+        if state.refined_keywords:
+            keywords_str = " ".join(state.refined_keywords)
+            query = f"{query} {keywords_str}"
+        
+        # 添加咨询类增强词
+        query = f"{query} 定义 要求 规范 说明"
+        
+        # 如果是第二轮，添加top-3高分内容作为上下文
+        if state.current_round >= 1 and state.high_score_chunks:
+            context_parts = ["根据已检索到的优质内容："]
+            context_parts.extend(state.high_score_chunks)
+            context_parts.append(f"，请继续检索更多关于{query}的相关信息。")
+            query = " ".join(context_parts)
+        
+        # 执行检索：咨询类需要更多信息，降低阈值
+        # 第一轮用top_k=15，第二轮用top_k=10
+        top_k = 10 if state.current_round >= 1 else 15
+        min_score = 0.3 if state.current_round == 0 else 0.6
+        
+        response = client.search(
+            query=query,
+            top_k=top_k,
+            min_score=min_score
+        )
+        
+        # 处理检索结果
+        retrieval_results = []
+        if response.code == 0 and response.chunks:
+            for chunk in response.chunks:
+                # 提取文件名
+                file_name = extract_file_name_from_content(chunk.content)
+                
+                retrieval_results.append({
+                    "content": chunk.content,
+                    "score": chunk.score,
+                    "doc_id": chunk.doc_id,
+                    "file_name": file_name
+                })
+        
+        # 更新状态
+        updated_state = state.model_copy(deep=True)
+        updated_state.retrieval_results = retrieval_results
+        updated_state.previous_retrieval_results = previous_results
+        
+        return updated_state
+        
+    except Exception as e:
+        # 发生错误时返回空结果
+        return state
 
 
-def consult_context_expand_loop_wrapper_node(
+# ==================== 包装节点：咨询类上下文扩展 ====================
+
+def consult_context_expand_wrapper_node(
     state: ConsultRetrievalLoopState,
     config: RunnableConfig,
     runtime: Runtime[Context]
 ) -> ConsultRetrievalLoopState:
     """
-    title: 咨询类上下文扩展包装器
-    desc: 在子图中执行上下文扩展
-    integrations: 无
+    title: 咨询类上下文扩展（子图节点）
+    desc: 扩展咨询类检索结果，获取完整段落
     """
     ctx = runtime.context
     
-    # 扩展每个检索结果
-    expanded_results = []
-    for result in state.retrieval_results:
-        content = result.get("content", "")
-        expanded_content = expand_content_around_chunk(content, window_size=200)
+    try:
+        expanded_results = []
         
-        expanded_results.append({
-            "content": expanded_content,
-            "score": result.get("score", 0.0),
-            "doc_id": result.get("doc_id", ""),
-            "file_name": result.get("file_name", "")
-        })
-    
-    # 更新循环状态
-    updated_state = state.model_copy(deep=True)
-    updated_state.retrieval_results = expanded_results
-    
-    return updated_state
+        for result in state.retrieval_results:
+            original_content = result.get("content", "")
+            
+            # 扩展内容到 500-800 字
+            expanded_content = expand_content_around_chunk(original_content, target_length=650)
+            
+            expanded_results.append({
+                "content": expanded_content,
+                "score": result.get("score", 0.0),
+                "doc_id": result.get("doc_id", ""),
+                "file_name": result.get("file_name", "")
+            })
+        
+        # 更新状态
+        updated_state = state.model_copy(deep=True)
+        updated_state.retrieval_results = expanded_results
+        
+        return updated_state
+        
+    except Exception as e:
+        # 发生错误时返回原始结果
+        return state
 
 
-def consult_rerank_loop_wrapper_node(
+# ==================== 包装节点：咨询类重排序 ====================
+
+def consult_rerank_wrapper_node(
     state: ConsultRetrievalLoopState,
     config: RunnableConfig,
     runtime: Runtime[Context]
 ) -> ConsultRetrievalLoopState:
     """
-    title: 咨询类重排序包装器
-    desc: 在子图中执行重排序和评分
+    title: 咨询类重排序（子图节点）
+    desc: 对咨询类扩展结果进行多维度评分和排序，计算加权总分
     integrations: 大语言模型
     """
     ctx = runtime.context
     
-    # 读取配置文件
-    cfg_file = os.path.join(os.getenv("COZE_WORKSPACE_PATH"), "config/consult_rerank_cfg.json")
-    with open(cfg_file, 'r', encoding='utf-8') as fd:
-        _cfg = json.load(fd)
-    
-    llm_config = _cfg.get("config", {})
-    sp = _cfg.get("sp", "")
-    up_tpl = Template(_cfg.get("up", ""))
-    
-    # 渲染用户提示词
-    user_prompt_content = up_tpl.render({
-        "user_query": state.user_query,
-        "expanded_results": state.retrieval_results
-    })
-    
-    # 调用大语言模型
-    client = LLMClient(ctx=ctx)
-    messages = [
-        {"role": "system", "content": sp},
-        {"role": "user", "content": user_prompt_content}
-    ]
-    
     try:
+        # 读取配置文件
+        cfg_file = os.path.join(os.getenv("COZE_WORKSPACE_PATH"), "config/consult_rerank_cfg.json")
+        with open(cfg_file, 'r', encoding='utf-8') as fd:
+            _cfg = json.load(fd)
+        
+        llm_config = _cfg.get("config", {})
+        sp = _cfg.get("sp", "")
+        up_tpl = Template(_cfg.get("up", ""))
+        
+        # 渲染用户提示词
+        user_prompt_content = up_tpl.render({
+            "user_query": state.user_query,
+            "expanded_results": state.retrieval_results
+        })
+        
+        # 调用大语言模型
+        client = LLMClient(ctx=ctx)
+        
+        messages = [
+            {"role": "system", "content": sp},
+            {"role": "user", "content": user_prompt_content}
+        ]
+        
         response = client.invoke(
             messages=messages,
             model=llm_config.get("model", "doubao-seed-1-8-251228"),
@@ -183,51 +238,61 @@ def consult_rerank_loop_wrapper_node(
                 elif isinstance(item, str):
                     response_text += item
         
-        # 解析JSON响应
-        import re
-        json_match = re.search(r'\{[\s\S]*\}', response_text)
-        if json_match:
-            json_str = json_match.group(0)
-            try:
-                result_data = json.loads(json_str)
-                retrieval_results = result_data.get("ranked_results", [])
-            except:
-                retrieval_results = state.retrieval_results
-        else:
-            retrieval_results = state.retrieval_results
+        response_text = response_text.strip()
+        
+        # 解析 JSON 响应
+        try:
+            # 提取 JSON 内容
+            json_start = response_text.find("{")
+            json_end = response_text.rfind("}") + 1
+            
+            if json_start >= 0 and json_end > json_start:
+                json_str = response_text[json_start:json_end]
+                result_json = json.loads(json_str)
+                ranked_results = result_json.get("ranked_results", [])
+            else:
+                # 无法解析 JSON，返回原始结果
+                ranked_results = state.retrieval_results[:5]
+        except Exception as e:
+            # 解析失败，返回原始结果
+            ranked_results = state.retrieval_results[:5]
+        
+        # 计算加权总分
+        weighted_score = calculate_weighted_score(ranked_results)
+        
+        # 提取top-3高分内容（用于下一轮）
+        high_score_chunks = extract_top_k_chunks(ranked_results, 3)
+        
+        # 更新状态
+        updated_state = state.model_copy(deep=True)
+        updated_state.previous_score = state.current_score
+        updated_state.current_score = weighted_score
+        updated_state.current_round = state.current_round + 1  # 轮次递增
+        updated_state.retrieval_results = ranked_results
+        updated_state.high_score_chunks = high_score_chunks
+        
+        # 设置退出原因
+        if weighted_score >= state.target_score:
+            updated_state.exit_reason = "target_score_reached"
+        elif updated_state.current_round >= state.max_rounds:
+            if weighted_score >= state.min_score_threshold:
+                updated_state.exit_reason = "max_rounds_reached"
+            else:
+                updated_state.exit_reason = "fallback"
+        elif updated_state.current_round > 1 and weighted_score < state.previous_score:
+            updated_state.exit_reason = "score_decreased"
+        
+        return updated_state
         
     except Exception as e:
-        retrieval_results = state.retrieval_results
-    
-    # 计算加权总分
-    weighted_score = calculate_weighted_score(retrieval_results)
-    
-    # 提取top-3高分内容（用于下一轮）
-    high_score_chunks = extract_top_k_chunks(retrieval_results, 3)
-    
-    # 更新循环状态
-    updated_state = state.model_copy(deep=True)
-    updated_state.previous_score = state.current_score
-    updated_state.current_score = weighted_score
-    updated_state.current_round = state.current_round + 1  # 轮次递增
-    updated_state.retrieval_results = retrieval_results
-    updated_state.high_score_chunks = high_score_chunks
-    
-    # 设置退出原因
-    if weighted_score >= state.target_score:
-        updated_state.exit_reason = "target_score_reached"
-    elif state.current_round >= state.max_rounds:
-        if weighted_score >= state.min_score_threshold:
-            updated_state.exit_reason = "max_rounds_reached"
-        else:
-            updated_state.exit_reason = "fallback"
-    elif state.current_round > 1 and weighted_score < state.previous_score:
-        updated_state.exit_reason = "score_decreased"
-    
-    return updated_state
+        # 发生错误时，返回原始状态
+        updated_state = state.model_copy(deep=True)
+        updated_state.current_round = state.current_round + 1
+        updated_state.exit_reason = "fallback"
+        return updated_state
 
 
-# ==================== 咨询类循环条件判断 ====================
+# ==================== 循环条件判断 ====================
 
 def should_continue_consult_loop(state: ConsultRetrievalLoopState) -> Literal["continue", "exit_success", "exit_fallback"]:
     """
@@ -272,9 +337,9 @@ def create_consult_retrieval_subgraph() -> StateGraph:
     )
     
     # 添加节点
-    builder.add_node("consult_retrieval_wrapper", consult_retrieval_loop_wrapper_node)
-    builder.add_node("consult_context_expand_wrapper", consult_context_expand_loop_wrapper_node)
-    builder.add_node("consult_rerank_wrapper", consult_rerank_loop_wrapper_node)
+    builder.add_node("consult_retrieval_wrapper", consult_retrieval_wrapper_node)
+    builder.add_node("consult_context_expand_wrapper", consult_context_expand_wrapper_node)
+    builder.add_node("consult_rerank_wrapper", consult_rerank_wrapper_node)
     
     # 设置入口点
     builder.set_entry_point("consult_retrieval_wrapper")
@@ -300,5 +365,5 @@ def create_consult_retrieval_subgraph() -> StateGraph:
     return consult_retrieval_subgraph
 
 
-# 创建子图实例
+# 创建并导出子图实例
 consult_retrieval_subgraph = create_consult_retrieval_subgraph()
