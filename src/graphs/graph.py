@@ -5,7 +5,12 @@ from coze_coding_utils.runtime_ctx.context import Context
 from graphs.state import (
     GlobalState,
     GraphInput,
-    GraphOutput
+    GraphOutput,
+    ConsultRetrievalLoopStartInput,
+    ConsultRetrievalLoopStartOutput,
+    ConsultRetrievalLoopState,
+    ConsultRetrievalLoopEndInput,
+    ConsultRetrievalLoopEndOutput
 )
 from graphs.nodes import (
     intent_recognition_node,
@@ -14,6 +19,8 @@ from graphs.nodes import (
     consult_retrieval_node,
     consult_context_expand_node,
     consult_rerank_node,
+    consult_retrieval_loop_start_node,
+    consult_retrieval_loop_end_node,
     judge_process_node,
     mixed_process_node,
     judge_retrieval_node,
@@ -50,10 +57,12 @@ builder = StateGraph(GlobalState, input_schema=GraphInput, output_schema=GraphOu
 builder.add_node("intent_recognition", intent_recognition_node,
                 metadata={"type": "agent", "llm_cfg": "config/intent_recognition_cfg.json"})
 builder.add_node("term_preprocessing", term_preprocessing_node)
+
+# 咨询类意图处理节点
 builder.add_node("consult_process", consult_process_node,
                 metadata={"type": "agent", "llm_cfg": "config/consult_process_cfg.json"})
 
-# 咨询类检索节点（原有流程）
+# 咨询类循环检索节点（暂时使用原有线性流程，后续再集成循环）
 builder.add_node("consult_retrieval", consult_retrieval_node)
 builder.add_node("consult_context_expand", consult_context_expand_node)
 builder.add_node("consult_rerank", consult_rerank_node,
@@ -121,6 +130,8 @@ builder.add_edge("mixed_context_expand", "mixed_rerank")
 builder.add_edge("consult_rerank", "response_generation")
 builder.add_edge("judge_rerank", "response_generation")
 builder.add_edge("mixed_rerank", "response_generation")
+
+# 响应生成 → END
 builder.add_edge("response_generation", END)
 
 # 编译图
