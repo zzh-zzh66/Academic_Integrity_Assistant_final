@@ -231,9 +231,6 @@ print(result["formatted_response"])
 不同类型问题的处理流程和响应格式：
 - [查询详细示例](./docs/examples.md)
 
-### 技术架构
-系统架构、数据流、模块设计和性能优化：
-- [技术架构说明](./docs/architecture.md)
 
 ---
 
