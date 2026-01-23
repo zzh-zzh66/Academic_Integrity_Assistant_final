@@ -704,9 +704,17 @@ print(main_graph.invoke({'user_query': '请详细说明自我抄袭的定义，�
 
 ---
 
+## 👨‍💻 开发者
+
+- **主要开发者**：zihuazhou02 (zihuazhou02@gmail.com)
+- **开发平台**：[Coze Coding](https://www.coze.cn/) - 智能AI编程平台
+  - 本项目基于 Coze Coding 平台开发，利用其强大的 LangGraph 工作流编排能力和 AI 辅助编码功能
+  - 平台提供了一体化的开发环境，包括代码生成、调试、测试和部署等功能
+
 ## 📞 联系方式
 
 - 项目主页：[GitHub Repository](https://github.com/zzh-zzh66/Academic_Integrity_Assistant_final)
+- 开发者邮箱：zihuazhou02@gmail.com
 - 问题反馈：[Issues](https://github.com/zzh-zzh66/Academic_Integrity_Assistant_final/issues)
 
 ---
@@ -715,6 +723,7 @@ print(main_graph.invoke({'user_query': '请详细说明自我抄袭的定义，�
 
 感谢以下开源项目和服务：
 
+- [Coze Coding](https://www.coze.cn/) - 智能AI编程平台，提供强大的工作流编排和AI辅助编码功能
 - [LangGraph](https://github.com/langchain-ai/langgraph) - 工作流框架
 - [豆包大模型](https://www.doubao.com/) - 大语言模型服务
 - [向量知识库](https://www.volcengine.com/product/ark) - 检索服务
