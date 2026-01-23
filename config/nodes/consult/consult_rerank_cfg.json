@@ -3,7 +3,7 @@
     "model": "doubao-seed-1-8-251228",
     "temperature": 0.1,
     "top_p": 0.9,
-    "max_completion_tokens": 2000,
+    "max_completion_tokens": 500,
     "thinking": "disabled"
   },
   "sp": "你是知识库检索评分专家，负责对检索结果进行多维度评分和排序。",

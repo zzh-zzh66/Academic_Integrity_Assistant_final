@@ -1,9 +1,9 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "consult_loop_config",
-  "title": "咨询类循环检索配置",
-  "description": "咨询类意图的循环检索参数配置",
-  "version": "1.0.0",
+  "title": "咨询类循环检索配置（简化版）",
+  "description": "咨询类意图的循环检索参数配置，优化为2轮循环",
+  "version": "2.0.0",
   
   "config": {
     "model": "doubao-seed-1-8-251228",
@@ -16,9 +16,9 @@
   "up": "循环检索配置文件（此字段仅用于满足LSP验证，实际不使用）",
   
   "basic_params": {
-    "max_rounds": 3,
-    "target_score": 0.8,
-    "min_score_threshold": 0.65,
+    "max_rounds": 2,
+    "target_score": 0.75,
+    "min_score_threshold": 0.6,
     "time_limit_seconds": 15
   },
   
@@ -36,41 +36,28 @@
     "second_round": {
       "top_k": 10,
       "min_score": 0.6
-    },
-    "third_round": {
-      "top_k": 8,
-      "min_score": 0.7
     }
   },
   
   "early_exit": {
     "enabled": true,
     "top_score_threshold": 0.85,
-    "top_3_avg_threshold": 0.75,
     "min_round_before_early_exit": 1
   },
   
   "decline_tolerance": {
     "enabled": true,
-    "tolerance_rate": 0.05,
-    "consecutive_decline_threshold": 2,
-    "confidence_weighted": true,
-    "min_confidence_threshold": 0.7,
-    "window_average_enabled": true,
-    "window_size": 2
+    "tolerance_rate": 0.05
   },
   
   "improvement_detection": {
     "enabled": true,
-    "convergence_window": 3,
-    "convergence_tolerance": 0.05,
-    "min_improvement_per_round": 0.02,
-    "stagnant_rounds_threshold": 2
+    "simple_convergence": true,
+    "min_improvement": 0.05
   },
   
   "llm_enhancement": {
-    "enable_improvement_prediction": true,
-    "prediction_confidence_threshold": 0.7,
+    "enable_improvement_prediction": false,
     "enable_complexity_adaptive": true
   },
   
@@ -79,20 +66,13 @@
       "enabled": true,
       "config_file": "config/nodes/consult/consult_rerank_cfg.json"
     },
-    "complexity": {
-      "enabled": true,
-      "config_file": "config/nodes/complexity_cfg.json",
-      "execute_rounds": [0]
-    },
     "context_extract": {
       "enabled": true,
       "config_file": "config/nodes/consult/consult_context_extract_cfg.json",
-      "execute_rounds": [0, 1, 2]
+      "execute_rounds": [0, 1]
     },
     "improvement_analysis": {
-      "enabled": true,
-      "config_file": "config/nodes/consult/consult_improvement_analysis_cfg.json",
-      "execute_rounds": [1, 2]
+      "enabled": false
     }
   }
 }

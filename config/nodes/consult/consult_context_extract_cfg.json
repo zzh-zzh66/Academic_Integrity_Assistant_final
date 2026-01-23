@@ -3,7 +3,7 @@
     "model": "doubao-seed-1-8-251228",
     "temperature": 0.3,
     "top_p": 0.9,
-    "max_completion_tokens": 1500,
+    "max_completion_tokens": 500,
     "thinking": "disabled"
   },
   "sp": "你是信息提取专家，负责从检索结果中提取结构化知识。",

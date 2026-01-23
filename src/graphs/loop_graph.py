@@ -430,50 +430,46 @@ def improvement_analysis_internal_node(
         return state
 
 
-# ==================== 循环条件判断 ====================
+# ==================== 循环条件判断（简化版 - 2轮循环） ====================
 
 def should_continue_consult_loop(state: ConsultRetrievalLoopState) -> Literal["continue", "exit_success", "exit_fallback"]:
     """
-    title: 咨询类循环条件判断
-    desc: 判断是否继续循环检索
+    title: 咨询类循环条件判断（简化版）
+    desc: 判断是否继续循环检索（最多2轮）
     """
     logger.info(f"=== 循环条件判断 - 第{state.current_round}轮 ===")
     logger.info(f"当前分数: {state.current_score:.4f}")
     logger.info(f"目标分数: {state.target_score:.4f}")
     logger.info(f"最低阈值: {state.min_score_threshold:.4f}")
-    logger.info(f"上一轮分数: {state.previous_score:.4f}")
-    logger.info(f"已设置退出原因: {state.exit_reason}")
+    logger.info(f"最高分: {state.top_score:.4f}")
+    logger.info(f"最大轮次: {state.max_rounds}")
     
-    # 1. 判断是否达到目标分数
+    # 1. 提前退出：最高分达到阈值（0.85）
+    if state.top_score >= 0.85:
+        logger.info(f"✓ 最高分达到提前退出阈值(0.85)，决定: exit_success")
+        return "exit_success"
+    
+    # 2. 达到目标分数
     if state.current_score >= state.target_score:
         logger.info(f"✓ 达到目标分数，决定: exit_success")
         return "exit_success"
     
-    # 2. 判断是否已退出（由improvement_analysis_node设置）
-    if state.exit_reason in ["target_score_reached", "max_rounds_reached"]:
-        logger.info(f"✓ 节点已设置成功退出，决定: exit_success")
-        return "exit_success"
-    elif state.exit_reason == "fallback":
-        logger.info(f"✗ 节点已设置兜底退出，决定: exit_fallback")
-        return "exit_fallback"
-    
-    # 3. 判断分数是否下降（仅从第二轮开始）
-    if state.current_round > 1:
-        if state.current_score < state.previous_score:
+    # 3. 分数下降检测（仅在第2轮，允许5%的下降容忍度）
+    if state.current_round == 1 and state.previous_score > 0:
+        if state.current_score < state.previous_score * 0.95:
             logger.info(f"✗ 分数下降({state.previous_score:.4f} -> {state.current_score:.4f})，决定: exit_fallback")
             return "exit_fallback"
     
-    # 4. 判断是否达到最大轮次
+    # 4. 达到最大轮次（2轮）
     if state.current_round >= state.max_rounds:
-        # 检查是否达到最低阈值
         if state.current_score >= state.min_score_threshold:
-            logger.info(f"✓ 达到最大轮次但分数达标，决定: exit_success")
+            logger.info(f"✓ 达到最大轮次且分数达标，决定: exit_success")
             return "exit_success"
         else:
             logger.info(f"✗ 达到最大轮次且分数未达标，决定: exit_fallback")
             return "exit_fallback"
     
-    # 5. 继续循环
+    # 5. 继续循环（仅在第0轮）
     logger.info(f"→ 继续下一轮检索，决定: continue")
     return "continue"
 
@@ -499,20 +495,19 @@ def create_consult_retrieval_subgraph() -> StateGraph:
     builder.add_node("consult_expand_internal", consult_expand_internal_node)
     builder.add_node("rerank_internal", rerank_internal_node)
     builder.add_node("context_extract_internal", context_extract_internal_node)
-    builder.add_node("improvement_analysis_internal", improvement_analysis_internal_node)
+    # improvement_analysis_internal_node 已禁用（配置文件中 enabled: false）
     
     # 设置入口点
     builder.set_entry_point("consult_retrieval_internal")
     
-    # 添加边：检索 → 扩展 → 重排序 → 上下文提取 → 改善分析
+    # 添加边：检索 → 扩展 → 重排序 → 上下文提取 → （循环判断）
     builder.add_edge("consult_retrieval_internal", "consult_expand_internal")
     builder.add_edge("consult_expand_internal", "rerank_internal")
     builder.add_edge("rerank_internal", "context_extract_internal")
-    builder.add_edge("context_extract_internal", "improvement_analysis_internal")
     
-    # 添加条件边：改善分析 → 继续循环或退出
+    # 添加条件边：上下文提取 → 继续循环或退出
     builder.add_conditional_edges(
-        source="improvement_analysis_internal",
+        source="context_extract_internal",
         path=should_continue_consult_loop,
         path_map={
             "continue": "consult_retrieval_internal",  # 继续循环

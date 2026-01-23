@@ -3,7 +3,7 @@
         "model": "doubao-seed-1-8-251228",
         "temperature": 0.3,
         "top_p": 0.9,
-        "max_completion_tokens": 1000,
+        "max_completion_tokens": 500,
         "thinking": "disabled"
     },
     "sp": "你是查询优化专家，负责根据查询复杂度动态调整检索策略，确保不同复杂度的查询都能获得最佳的检索效果。",
