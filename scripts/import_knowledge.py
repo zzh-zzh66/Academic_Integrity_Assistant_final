@@ -21,6 +21,35 @@ from utils.file.file import FileOps
 from utils.file.file import File
 
 
+def insert_path_markers(content: str, file_path: str, interval: int = 500) -> str:
+    """
+    在文本内容中按间隔插入文件路径标记，用于溯源
+    
+    Args:
+        content: 原始文本内容
+        file_path: 文件路径
+        interval: 插入间隔（字符数）
+        
+    Returns:
+        插入标记后的文本
+    """
+    if not content or len(content) <= interval:
+        # 内容太短，仅在开头添加一次
+        return f"[文件路径: {file_path}]\n\n{content}"
+    
+    result = []
+    result.append(f"[文件路径: {file_path}]")
+    
+    # 按间隔插入标记
+    for i in range(0, len(content), interval):
+        chunk = content[i:i + interval]
+        if i > 0:  # 每个新片段前插入标记
+            result.append(f"\n\n[文件路径: {file_path}]")
+        result.append(chunk)
+    
+    return "\n".join(result)
+
+
 def collect_files(knowledge_dir: str) -> List[Tuple[str, str]]:
     """
     收集知识库目录下的所有文件，返回（文件路径，相对路径）列表
@@ -130,8 +159,8 @@ def import_batch(client: KnowledgeClient, batch_data: List[Tuple[str, str]], tab
             failed_files.append((file_path, relative_path))
             continue
         
-        # 添加文件路径信息以保持目录结构
-        structured_content = f"[文件路径: {relative_path}]\n\n{content}"
+        # 使用路径标记策略：每500字插入完整文件路径
+        structured_content = insert_path_markers(content, relative_path, interval=500)
         
         doc = KnowledgeDocument(
             source=DataSourceType.TEXT,
@@ -169,7 +198,7 @@ def main():
     print("=" * 60)
     
     # 配置
-    knowledge_dir = "assets/knowledge"
+    knowledge_dir = "assets/test"
     table_name = "coze_doc_knowledge"
     batch_size = 10  # 减少批次大小，避免超时
     
