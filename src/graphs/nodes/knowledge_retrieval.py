@@ -33,11 +33,11 @@ def knowledge_retrieval_node(
             keywords_str = " ".join(state.extracted_keywords)
             query = f"{query} {keywords_str}"
 
-        # 执行检索
+        # 执行检索（优化：增加 top_k 获取更多相关片段）
         response = client.search(
             query=query,
-            top_k=5,
-            min_score=0.5
+            top_k=10,
+            min_score=0.6
         )
 
         # 处理检索结果
