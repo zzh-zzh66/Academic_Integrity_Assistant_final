@@ -4,7 +4,7 @@ from graphs.state import (
     GraphInput,
     GraphOutput
 )
-from graphs.node import (
+from graphs.nodes import (
     intent_recognition_node,
     consult_process_node,
     judge_process_node,
