@@ -9,7 +9,15 @@ class GlobalState(BaseModel):
     extracted_keywords: List[str] = Field(default=[], description="提取的关键词")
     behavior_analysis: Optional[dict] = Field(default=None, description="行为分析结果（行为判断类使用）")
     can_judge: Optional[bool] = Field(default=True, description="是否能够判断（行为判断类使用）")
-    
+
+    # 术语预处理节点输出字段
+    standard_terms: List[str] = Field(default=[], description="识别到的标准化术语列表")
+    expanded_terms: List[str] = Field(default=[], description="关联拓展后的术语列表")
+    action_elements: List[str] = Field(default=[], description="提取的行为要素")
+    object_elements: List[str] = Field(default=[], description="提取的对象要素")
+    enhanced_query: str = Field(default="", description="语义增强后的查询字符串")
+    term_confidence: float = Field(default=0.0, description="术语识别置信度 (0-1)")
+
     # 意图处理节点输出字段
     refined_query: str = Field(default="", description="优化后的查询语句")
     refined_keywords: List[str] = Field(default=[], description="优化后的关键词列表")
@@ -23,7 +31,7 @@ class GlobalState(BaseModel):
     consult_keywords: List[str] = Field(default=[], description="咨询部分的关键词（混合类使用）")
     judge_query: str = Field(default="", description="判断部分的查询语句（混合类使用）")
     judge_keywords: List[str] = Field(default=[], description="判断部分的关键词（混合类使用）")
-    
+
     # 后续节点输出字段
     retrieval_results: List[dict] = Field(default=[], description="知识库检索结果")
     formatted_response: str = Field(default="", description="格式化后的响应内容")
@@ -50,6 +58,24 @@ class IntentRecognitionOutput(BaseModel):
     intent_type: str = Field(..., description="识别到的意图类型：咨询类/行为判断类/混合类")
     extracted_keywords: List[str] = Field(default=[], description="提取的关键词")
     behavior_analysis: Optional[dict] = Field(default=None, description="行为分析结果（行为判断类或混合类使用）")
+
+
+# ==================== 术语预处理节点 ====================
+class TermPreprocessingInput(BaseModel):
+    """术语预处理节点的输入"""
+    user_query: str = Field(..., description="用户输入的查询问题")
+    intent_type: str = Field(default="", description="识别到的意图类型")
+    extracted_keywords: List[str] = Field(default=[], description="提取的关键词")
+
+
+class TermPreprocessingOutput(BaseModel):
+    """术语预处理节点的输出"""
+    standard_terms: List[str] = Field(..., description="识别到的标准化术语列表")
+    expanded_terms: List[str] = Field(..., description="关联拓展后的术语列表")
+    action_elements: List[str] = Field(default=[], description="提取的行为要素")
+    object_elements: List[str] = Field(default=[], description="提取的对象要素")
+    enhanced_query: str = Field(..., description="语义增强后的查询字符串")
+    term_confidence: float = Field(..., description="术语识别置信度 (0-1)")
 
 
 # ==================== 咨询类知识库检索节点 ====================
@@ -141,6 +167,13 @@ class ConsultProcessInput(BaseModel):
     """咨询类意图处理节点的输入"""
     user_query: str = Field(..., description="用户输入的查询问题")
     extracted_keywords: List[str] = Field(default=[], description="提取的关键词")
+    # 术语预处理节点输出字段
+    standard_terms: List[str] = Field(default=[], description="识别到的标准化术语列表")
+    expanded_terms: List[str] = Field(default=[], description="关联拓展后的术语列表")
+    action_elements: List[str] = Field(default=[], description="提取的行为要素")
+    object_elements: List[str] = Field(default=[], description="提取的对象要素")
+    enhanced_query: str = Field(default="", description="语义增强后的查询字符串")
+    term_confidence: float = Field(default=0.0, description="术语识别置信度 (0-1)")
 
 
 class ConsultProcessOutput(BaseModel):
@@ -155,6 +188,13 @@ class JudgeProcessInput(BaseModel):
     user_query: str = Field(..., description="用户输入的查询问题")
     extracted_keywords: List[str] = Field(default=[], description="提取的关键词")
     behavior_analysis: Optional[dict] = Field(default=None, description="行为分析结果")
+    # 术语预处理节点输出字段
+    standard_terms: List[str] = Field(default=[], description="识别到的标准化术语列表")
+    expanded_terms: List[str] = Field(default=[], description="关联拓展后的术语列表")
+    action_elements: List[str] = Field(default=[], description="提取的行为要素")
+    object_elements: List[str] = Field(default=[], description="提取的对象要素")
+    enhanced_query: str = Field(default="", description="语义增强后的查询字符串")
+    term_confidence: float = Field(default=0.0, description="术语识别置信度 (0-1)")
 
 
 class JudgeProcessOutput(BaseModel):
@@ -173,6 +213,13 @@ class MixedProcessInput(BaseModel):
     user_query: str = Field(..., description="用户输入的查询问题")
     extracted_keywords: List[str] = Field(default=[], description="提取的关键词")
     behavior_analysis: Optional[dict] = Field(default=None, description="行为分析结果")
+    # 术语预处理节点输出字段
+    standard_terms: List[str] = Field(default=[], description="识别到的标准化术语列表")
+    expanded_terms: List[str] = Field(default=[], description="关联拓展后的术语列表")
+    action_elements: List[str] = Field(default=[], description="提取的行为要素")
+    object_elements: List[str] = Field(default=[], description="提取的对象要素")
+    enhanced_query: str = Field(default="", description="语义增强后的查询字符串")
+    term_confidence: float = Field(default=0.0, description="术语识别置信度 (0-1)")
 
 
 class MixedProcessOutput(BaseModel):

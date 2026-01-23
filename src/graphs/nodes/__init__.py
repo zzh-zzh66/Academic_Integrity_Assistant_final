@@ -5,6 +5,7 @@
 # 通用节点
 from graphs.nodes.common import (
     intent_recognition_node,
+    term_preprocessing_node,
     knowledge_retrieval_node,
     response_generation_node,
     extract_file_name_from_content,
@@ -38,6 +39,7 @@ from graphs.nodes.mixed import (
 __all__ = [
     # 通用节点
     "intent_recognition_node",
+    "term_preprocessing_node",
     "knowledge_retrieval_node",
     "response_generation_node",
     "extract_file_name_from_content",

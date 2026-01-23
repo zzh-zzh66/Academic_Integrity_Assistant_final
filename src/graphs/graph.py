@@ -6,6 +6,7 @@ from graphs.state import (
 )
 from graphs.nodes import (
     intent_recognition_node,
+    term_preprocessing_node,
     consult_process_node,
     judge_process_node,
     mixed_process_node,
@@ -43,8 +44,9 @@ def route_intent_type(state: GlobalState) -> str:
 builder = StateGraph(GlobalState, input_schema=GraphInput, output_schema=GraphOutput)
 
 # 添加节点
-builder.add_node("intent_recognition", intent_recognition_node, 
+builder.add_node("intent_recognition", intent_recognition_node,
                 metadata={"type": "agent", "llm_cfg": "config/intent_recognition_cfg.json"})
+builder.add_node("term_preprocessing", term_preprocessing_node)
 builder.add_node("consult_process", consult_process_node,
                 metadata={"type": "agent", "llm_cfg": "config/consult_process_cfg.json"})
 builder.add_node("judge_process", judge_process_node,
@@ -76,9 +78,12 @@ builder.add_node("response_generation", response_generation_node,
 # 设置入口点
 builder.set_entry_point("intent_recognition")
 
+# 添加边：意图识别 → 术语预处理
+builder.add_edge("intent_recognition", "term_preprocessing")
+
 # 添加条件分支：根据意图类型路由到不同的处理节点
 builder.add_conditional_edges(
-    source="intent_recognition",
+    source="term_preprocessing",
     path=route_intent_type,
     path_map={
         "咨询类处理": "consult_process",

@@ -27,24 +27,36 @@ def consult_process_node(
 ) -> ConsultProcessOutput:
     """
     title: 咨询类意图处理
-    desc: 分析和优化咨询类问题，提取核心关键词和咨询焦点
+    desc: 分析和优化咨询类问题，提取核心关键词和咨询焦点，使用术语预处理节点的输出增强查询
     integrations: 大语言模型
     """
     ctx = runtime.context
-    
+
     # 读取配置文件
     cfg_file = os.path.join(os.getenv("COZE_WORKSPACE_PATH"), config['metadata']['llm_cfg'])
     with open(cfg_file, 'r', encoding='utf-8') as fd:
         _cfg = json.load(fd)
-    
+
     llm_config = _cfg.get("config", {})
     sp = _cfg.get("sp", "")
     up_tpl = Template(_cfg.get("up", ""))
-    
-    # 渲染用户提示词
+
+    # 获取术语预处理节点的输出（通过 state 参数）
+    enhanced_query = state.enhanced_query if state.enhanced_query else state.user_query
+    standard_terms = state.standard_terms
+    expanded_terms = state.expanded_terms
+    action_elements = state.action_elements
+    object_elements = state.object_elements
+
+    # 构建增强的用户提示词
     user_prompt_content = up_tpl.render({
         "user_query": state.user_query,
-        "extracted_keywords": state.extracted_keywords
+        "extracted_keywords": state.extracted_keywords,
+        "enhanced_query": enhanced_query,
+        "standard_terms": standard_terms,
+        "expanded_terms": expanded_terms,
+        "action_elements": action_elements,
+        "object_elements": object_elements
     })
     
     # 调用大语言模型
