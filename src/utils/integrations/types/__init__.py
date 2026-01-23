@@ -1,10 +1,10 @@
 """OpenAI 类型定义"""
 
-from utils.openai.types.request import (
+from .request import (
     ChatMessage,
     ChatCompletionRequest,
 )
-from utils.openai.types.response import (
+from .response import (
     ToolCallFunction,
     ToolCallChunk,
     Delta,

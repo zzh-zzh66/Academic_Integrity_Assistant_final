@@ -1,7 +1,7 @@
 """OpenAI 请求转换器: OpenAI Request → LangGraph Input"""
 
 from typing import Dict, Any, List
-from utils.openai.types.request import (
+from utils.integrations.types.request import (
     ChatCompletionRequest,
     ChatMessage,
 )

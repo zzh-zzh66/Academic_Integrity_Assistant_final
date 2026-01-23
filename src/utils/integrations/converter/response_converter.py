@@ -4,7 +4,7 @@ import json
 import time
 from typing import Iterator, Optional, List, Dict, Any
 
-from utils.openai.types.response import (
+from utils.integrations.types.response import (
     ChatCompletionChunk,
     ChatCompletionResponse,
     ChunkChoice,

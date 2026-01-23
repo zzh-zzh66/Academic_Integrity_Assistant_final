@@ -7,7 +7,7 @@ import traceback
 from typing import Optional, Any, Dict, Tuple
 
 from .codes import ErrorCode, ErrorCategory, get_error_description
-from .patterns import match_error_pattern, match_traceback_pattern, match_custom_exception_pattern, ERROR_PATTERNS
+from .error_patterns import match_error_pattern, match_traceback_pattern, match_custom_exception_pattern, ERROR_PATTERNS
 
 
 class VibeCodingError(Exception):

@@ -1,10 +1,13 @@
 import os
 import json
+import logging
 from jinja2 import Template
 from langchain_core.runnables import RunnableConfig
 from langgraph.runtime import Runtime
 from coze_coding_utils.runtime_ctx.context import Context
 from coze_coding_dev_sdk import LLMClient, KnowledgeClient
+
+logger = logging.getLogger(__name__)
 
 from graphs.state import (
     JudgeRetrievalEnhancedInput,
@@ -82,4 +85,3 @@ def judge_context_expand_enhanced_node(
 
 
 # ==================== 行为判断类违规判断节点 ====================
-

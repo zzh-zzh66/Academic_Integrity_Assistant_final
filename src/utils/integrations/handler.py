@@ -9,9 +9,9 @@ from typing import Dict, Any, Union, AsyncGenerator
 from fastapi.responses import StreamingResponse, JSONResponse
 
 from coze_coding_utils.runtime_ctx.context import Context
-from utils.openai.types.response import OpenAIError, OpenAIErrorResponse
-from utils.openai.converter.request_converter import RequestConverter
-from utils.openai.converter.response_converter import ResponseConverter
+from utils.integrations.types.response import OpenAIError, OpenAIErrorResponse
+from utils.integrations.converter.request_converter import RequestConverter
+from utils.integrations.converter.response_converter import ResponseConverter
 from utils.error import classify_error
 
 logger = logging.getLogger(__name__)
