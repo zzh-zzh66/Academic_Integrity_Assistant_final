@@ -1,4 +1,4 @@
-# 学术诚信助手 (Academic Integrity Assistant)
+# 学术诚信助手工作流 (Academic Integrity Assistant workflow)
 
 > 基于 LangGraph 的智能学术诚信问答系统，支持三类意图识别、自适应检索策略和多轮循环优化
 
