@@ -3,6 +3,7 @@
 这个文件专门用于封装咨询类循环检索节点，避免循环导入
 """
 
+import logging
 from langchain_core.runnables import RunnableConfig
 from langgraph.runtime import Runtime
 from coze_coding_utils.runtime_ctx.context import Context
@@ -12,6 +13,16 @@ from graphs.state import (
     ConsultRetrievalOutput,
     ConsultRetrievalLoopState
 )
+
+# 配置日志
+logger = logging.getLogger("consult_loop")
+logger.setLevel(logging.DEBUG)
+if not logger.handlers:
+    handler = logging.FileHandler("/app/work/logs/bypass/app.log")
+    handler.setLevel(logging.DEBUG)
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
 
 
 def consult_retrieval_loop_node(
@@ -24,12 +35,22 @@ def consult_retrieval_loop_node(
     desc: 通过调用子图实现咨询类的循环检索逻辑，支持动态检索策略
     integrations: 知识库, 大语言模型
     """
+    logger.info("=" * 80)
+    logger.info("咨询类循环检索节点开始执行")
+    logger.info("=" * 80)
+    
     # 延迟导入子图，避免循环依赖
     from graphs.loop_graph import consult_retrieval_subgraph
     
     # 从state中获取retrieval_strategy和query_complexity（如果存在）
     retrieval_strategy = getattr(state, 'retrieval_strategy', {}) if hasattr(state, 'retrieval_strategy') else {}
     query_complexity = getattr(state, 'query_complexity', 'standard') if hasattr(state, 'query_complexity') else 'standard'
+    
+    # 记录输入参数
+    logger.info(f"用户查询: {state.user_query}")
+    logger.info(f"优化查询: {state.refined_query}")
+    logger.info(f"查询复杂度: {query_complexity}")
+    logger.info(f"检索策略: {retrieval_strategy}")
     
     # 提取动态参数
     strategy_top_k = retrieval_strategy.get("top_k", 15)
@@ -80,6 +101,15 @@ def consult_retrieval_loop_node(
         top_k_third_round = 8
         min_score_third_round = 0.7
     
+    # 记录最终使用的参数
+    logger.info(f"最终参数:")
+    logger.info(f"  max_rounds: {max_rounds}")
+    logger.info(f"  target_score: {target_score}")
+    logger.info(f"  min_score_threshold: {min_score_threshold}")
+    logger.info(f"  top_k_first_round: {top_k_first_round}, min_score_first_round: {min_score_first_round}")
+    logger.info(f"  top_k_second_round: {top_k_second_round}, min_score_second_round: {min_score_second_round}")
+    logger.info(f"  top_k_third_round: {top_k_third_round}, min_score_third_round: {min_score_third_round}")
+    
     # 1. 将父图状态转换为子图状态
     subgraph_state = ConsultRetrievalLoopState(
         user_query=state.user_query,
@@ -114,7 +144,17 @@ def consult_retrieval_loop_node(
     # 动态导入子图，避免编译时循环检测
     from graphs.loop_graph import create_consult_retrieval_subgraph
     subgraph = create_consult_retrieval_subgraph()
+    logger.info("开始调用子图...")
     subgraph_result_dict = subgraph.invoke(subgraph_state.model_dump())  # type: ignore[attribute-error]
+    
+    # 记录子图结果
+    logger.info("=" * 80)
+    logger.info("子图调用完成")
+    logger.info("=" * 80)
+    logger.info(f"最终轮次: {subgraph_result_dict.get('current_round', 0)}")
+    logger.info(f"最终分数: {subgraph_result_dict.get('current_score', 0):.4f}")
+    logger.info(f"退出原因: {subgraph_result_dict.get('exit_reason', '')}")
+    logger.info(f"检索结果数: {len(subgraph_result_dict.get('retrieval_results', []))}")
 
     # 3. 判断是否需要兜底回答
     final_results = subgraph_result_dict.get("retrieval_results", [])
@@ -123,12 +163,19 @@ def consult_retrieval_loop_node(
     exit_reason = subgraph_result_dict.get("exit_reason", "")
     if exit_reason == "fallback":
         # 分数太低，使用空结果
+        logger.warning("退出原因: fallback，使用空结果")
         final_results = []
     elif exit_reason == "score_decreased":
         # 分数下降，使用上一轮结果
+        logger.info("退出原因: score_decreased，使用上一轮结果")
         previous_results = subgraph_result_dict.get("previous_retrieval_results", [])
         if previous_results:
             final_results = previous_results
+    else:
+        logger.info(f"正常退出: {exit_reason}")
+    
+    logger.info(f"最终返回结果数: {len(final_results)}")
+    logger.info("=" * 80)
     
     # 4. 将子图输出转换回父图状态
     return ConsultRetrievalOutput(

@@ -5,6 +5,7 @@
 
 import os
 import time
+import logging
 from typing import Literal
 from langgraph.graph import StateGraph, END
 from langchain_core.runnables import RunnableConfig
@@ -23,6 +24,16 @@ from graphs.state import (
 )
 from graphs.nodes.common import extract_file_name_from_content
 from graphs.loop_config_loader import config_loader
+
+# 配置日志
+logger = logging.getLogger("consult_retrieval")
+logger.setLevel(logging.DEBUG)
+if not logger.handlers:
+    handler = logging.FileHandler("/app/work/logs/bypass/app.log")
+    handler.setLevel(logging.DEBUG)
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
 
 
 # ==================== 循环内部节点1：知识库检索 ====================
@@ -49,6 +60,14 @@ def consult_retrieval_internal_node(
         # 初始化知识库客户端
         client = KnowledgeClient(ctx=ctx)
         
+        # 记录输入信息
+        logger.info(f"=== 咨询类检索开始 - 第{state.current_round}轮 ===")
+        logger.info(f"用户查询: {state.user_query}")
+        logger.info(f"优化查询: {state.refined_query}")
+        logger.info(f"咨询焦点: {state.consult_focus}")
+        logger.info(f"优化关键词: {state.refined_keywords}")
+        logger.info(f"上一轮结果数: {len(previous_results)}")
+        
         # 构建检索查询
         query = state.user_query
         
@@ -74,6 +93,9 @@ def consult_retrieval_internal_node(
             context_parts.extend(state.high_score_chunks)
             context_parts.append(f"，请继续检索更多关于{query}的相关信息。")
             query = " ".join(context_parts)
+            logger.info(f"第{state.current_round}轮使用上下文增强")
+        
+        logger.info(f"最终查询语句: {query}")
         
         # 根据当前轮次和检索策略确定参数
         current_round = state.current_round
@@ -90,16 +112,24 @@ def consult_retrieval_internal_node(
             top_k = retrieval_strategy.get("top_k", state.top_k_third_round)
             min_score = retrieval_strategy.get("min_score", state.min_score_third_round)
         
+        logger.info(f"检索参数: top_k={top_k}, min_score={min_score}")
+        
         response = client.search(
             query=query,
             top_k=top_k,
             min_score=min_score
         )
         
+        # 记录知识库响应
+        logger.info(f"知识库响应: code={response.code}, chunks数量={len(response.chunks) if hasattr(response, 'chunks') else 0}")
+        
         # 处理检索结果
         retrieval_results = []
         if response.code == 0 and response.chunks:
-            for chunk in response.chunks:
+            logger.info(f"=== 原始chunks分数统计 ===")
+            for idx, chunk in enumerate(response.chunks):
+                logger.info(f"  Chunk[{idx}]: score={chunk.score}, doc_id={chunk.doc_id}")
+                
                 # 提取文件名
                 file_name = extract_file_name_from_content(chunk.content)
                 
@@ -109,6 +139,18 @@ def consult_retrieval_internal_node(
                     "doc_id": chunk.doc_id,
                     "file_name": file_name
                 })
+        
+        # 记录最终结果
+        logger.info(f"=== 过滤后结果 ===")
+        logger.info(f"结果数量: {len(retrieval_results)}")
+        if retrieval_results:
+            logger.info(f"最高分: {max(r['score'] for r in retrieval_results)}")
+            logger.info(f"最低分: {min(r['score'] for r in retrieval_results)}")
+            logger.info(f"平均分: {sum(r['score'] for r in retrieval_results) / len(retrieval_results):.4f}")
+            for idx, result in enumerate(retrieval_results):
+                logger.info(f"  Result[{idx}]: score={result['score']:.4f}, file={result['file_name']}")
+        else:
+            logger.warning(f"没有检索到任何结果！所有结果都被min_score={min_score}过滤掉了")
         
         # 更新状态
         updated_state = state.model_copy(deep=True)
@@ -177,6 +219,9 @@ def rerank_internal_node(
     from graphs.nodes.common import calculate_weighted_score, extract_top_k_chunks
     
     try:
+        logger.info(f"=== 重排序节点开始 - 第{state.current_round}轮 ===")
+        logger.info(f"输入结果数: {len(state.retrieval_results)}")
+        
         # 获取配置文件路径
         config_path = config_loader.get_node_config_path("consult", "rerank")
         
@@ -202,6 +247,16 @@ def rerank_internal_node(
         for result in rerank_output.ranked_results[:3]:
             high_score_chunks.append(result.get("content", ""))
         
+        # 记录重排序结果
+        logger.info(f"=== 重排序结果 ===")
+        logger.info(f"加权总分: {weighted_score:.4f}")
+        logger.info(f"top_score: {rerank_output.top_score:.4f}")
+        logger.info(f"top_3_avg: {rerank_output.top_3_avg:.4f}")
+        logger.info(f"average_confidence: {rerank_output.average_confidence:.4f}")
+        logger.info(f"目标分数: {state.target_score:.4f}")
+        logger.info(f"最低阈值: {state.min_score_threshold:.4f}")
+        logger.info(f"上一轮分数: {state.previous_score:.4f}")
+        
         # 更新状态
         updated_state = state.model_copy(deep=True)
         updated_state.previous_prev_score = state.previous_score
@@ -218,17 +273,24 @@ def rerank_internal_node(
         # 设置退出原因
         if weighted_score >= state.target_score:
             updated_state.exit_reason = "target_score_reached"
+            logger.info(f"✓ 达到目标分数，退出原因: target_score_reached")
         elif updated_state.current_round >= state.max_rounds:
             if weighted_score >= state.min_score_threshold:
                 updated_state.exit_reason = "max_rounds_reached"
+                logger.info(f"✓ 达到最大轮次但分数达标，退出原因: max_rounds_reached")
             else:
                 updated_state.exit_reason = "fallback"
+                logger.warning(f"✗ 达到最大轮次但分数未达标，退出原因: fallback")
         elif updated_state.current_round > 1 and weighted_score < state.previous_score:
             updated_state.exit_reason = "score_decreased"
+            logger.warning(f"✗ 分数下降，退出原因: score_decreased")
+        else:
+            logger.info(f"继续下一轮检索，当前轮次: {updated_state.current_round}/{state.max_rounds}")
         
         return updated_state
         
     except Exception as e:
+        logger.error(f"重排序节点发生异常: {str(e)}", exc_info=True)
         # 发生错误时，返回原始状态
         updated_state = state.model_copy(deep=True)
         updated_state.current_round = state.current_round + 1
@@ -375,30 +437,44 @@ def should_continue_consult_loop(state: ConsultRetrievalLoopState) -> Literal["c
     title: 咨询类循环条件判断
     desc: 判断是否继续循环检索
     """
+    logger.info(f"=== 循环条件判断 - 第{state.current_round}轮 ===")
+    logger.info(f"当前分数: {state.current_score:.4f}")
+    logger.info(f"目标分数: {state.target_score:.4f}")
+    logger.info(f"最低阈值: {state.min_score_threshold:.4f}")
+    logger.info(f"上一轮分数: {state.previous_score:.4f}")
+    logger.info(f"已设置退出原因: {state.exit_reason}")
+    
     # 1. 判断是否达到目标分数
     if state.current_score >= state.target_score:
+        logger.info(f"✓ 达到目标分数，决定: exit_success")
         return "exit_success"
     
     # 2. 判断是否已退出（由improvement_analysis_node设置）
     if state.exit_reason in ["target_score_reached", "max_rounds_reached"]:
+        logger.info(f"✓ 节点已设置成功退出，决定: exit_success")
         return "exit_success"
     elif state.exit_reason == "fallback":
+        logger.info(f"✗ 节点已设置兜底退出，决定: exit_fallback")
         return "exit_fallback"
     
     # 3. 判断分数是否下降（仅从第二轮开始）
     if state.current_round > 1:
         if state.current_score < state.previous_score:
+            logger.info(f"✗ 分数下降({state.previous_score:.4f} -> {state.current_score:.4f})，决定: exit_fallback")
             return "exit_fallback"
     
     # 4. 判断是否达到最大轮次
     if state.current_round >= state.max_rounds:
         # 检查是否达到最低阈值
         if state.current_score >= state.min_score_threshold:
+            logger.info(f"✓ 达到最大轮次但分数达标，决定: exit_success")
             return "exit_success"
         else:
+            logger.info(f"✗ 达到最大轮次且分数未达标，决定: exit_fallback")
             return "exit_fallback"
     
     # 5. 继续循环
+    logger.info(f"→ 继续下一轮检索，决定: continue")
     return "continue"
 
 
