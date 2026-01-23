@@ -14,6 +14,26 @@ class GlobalState(BaseModel):
     
     behavior_analysis: Optional[dict] = Field(default=None, description="行为分析结果（行为判断类使用）")
     can_judge: Optional[bool] = Field(default=True, description="是否能够判断（行为判断类使用）")
+    
+    # 🆕 预留扩展点：多轮对话和追问支持
+    conversation_history: List[dict] = Field(default=[], description="对话历史（预留，用于智能体多轮对话）")
+    conversation_turn: int = Field(default=1, description="对话轮次（预留）")
+    collected_information: dict = Field(default={}, description="已收集的关键信息（预留）")
+    pending_questions: List[str] = Field(default=[], description="待澄清问题列表（预留）")
+    decision_context: dict = Field(default={}, description="判断上下文（预留）")
+    
+    # 🆕 预留扩展点：置信度和追问
+    confidence_score: float = Field(default=0.0, description="判断置信度（0-1，预留）")
+    confidence_level: str = Field(default="medium", description="置信度等级：high/medium/low（预留）")
+    is_violation: Optional[bool] = Field(default=None, description="是否违规（预留）")
+    judgment_basis: str = Field(default="", description="判断依据（预留）")
+    relevant_rules: List[str] = Field(default=[], description="相关规则引用（预留）")
+    
+    # 🆕 预留扩展点：混合类分离结果
+    consult_retrieval_results: List[dict] = Field(default=[], description="咨询部分检索结果（混合类使用）")
+    judge_retrieval_results: List[dict] = Field(default=[], description="判断部分检索结果（混合类使用）")
+    retrieval_strategy_consult: dict = Field(default={}, description="咨询部分检索策略（混合类使用）")
+    retrieval_strategy_judge: dict = Field(default={}, description="判断部分检索策略（混合类使用）")
 
     # 术语预处理节点输出字段
     standard_terms: List[str] = Field(default=[], description="识别到的标准化术语列表")
@@ -115,6 +135,91 @@ class JudgeRetrievalOutput(BaseModel):
     """行为判断类知识库检索节点的输出"""
     retrieval_results: List[dict] = Field(default=[], description="知识库检索结果（行为判断类）")
     can_judge: bool = Field(default=True, description="是否能够判断（高分>=0.65时为True）")
+
+
+# ==================== 行为判断类增强节点 ====================
+class JudgeQueryOptimizeInput(BaseModel):
+    """行为判断类查询优化节点的输入"""
+    user_query: str = Field(..., description="用户输入的查询问题")
+    extracted_keywords: List[str] = Field(default=[], description="提取的关键词")
+    query_complexity: str = Field(default="standard", description="查询复杂度")
+    behavior_analysis: Optional[dict] = Field(default=None, description="行为分析结果")
+    # 术语预处理节点输出字段
+    standard_terms: List[str] = Field(default=[], description="识别到的标准化术语列表")
+    expanded_terms: List[str] = Field(default=[], description="关联拓展后的术语列表")
+    action_elements: List[str] = Field(default=[], description="提取的行为要素")
+    object_elements: List[str] = Field(default=[], description="提取的对象要素")
+    refined_query: str = Field(default="", description="优化后的查询语句")
+    refined_keywords: List[str] = Field(default=[], description="优化后的关键词列表")
+    behavior_subject: str = Field(default="", description="行为主体")
+    behavior_action: str = Field(default="", description="行为动作")
+    behavior_object: str = Field(default="", description="涉及对象")
+
+
+class JudgeQueryOptimizeOutput(BaseModel):
+    """行为判断类查询优化节点的输出"""
+    optimized_query: str = Field(..., description="优化后的查询语句")
+    optimized_keywords: List[str] = Field(default=[], description="优化后的关键词列表")
+    retrieval_strategy: dict = Field(default={}, description="检索策略配置")
+    optimization_reason: str = Field(default="", description="优化原因说明")
+
+
+class JudgeRetrievalEnhancedInput(BaseModel):
+    """行为判断类增强检索节点的输入"""
+    user_query: str = Field(..., description="用户输入的查询问题")
+    optimized_query: str = Field(default="", description="优化后的查询语句")
+    optimized_keywords: List[str] = Field(default=[], description="优化后的关键词列表")
+    query_complexity: str = Field(default="standard", description="查询复杂度")
+    retrieval_strategy: dict = Field(default={}, description="检索策略配置")
+    behavior_subject: str = Field(default="", description="行为主体")
+    behavior_action: str = Field(default="", description="行为动作")
+    behavior_object: str = Field(default="", description="涉及对象")
+
+
+class JudgeRetrievalEnhancedOutput(BaseModel):
+    """行为判断类增强检索节点的输出"""
+    retrieval_results: List[dict] = Field(default=[], description="增强检索结果")
+
+
+class JudgeContextExpandEnhancedInput(BaseModel):
+    """行为判断类拓宽上下文节点的输入"""
+    user_query: str = Field(..., description="用户输入的查询问题")
+    retrieval_results: List[dict] = Field(default=[], description="检索结果")
+
+
+class JudgeContextExpandEnhancedOutput(BaseModel):
+    """行为判断类拓宽上下文节点的输出"""
+    full_context_paragraphs: List[str] = Field(default=[], description="完整段落列表（3-10个）")
+    related_rules: List[str] = Field(default=[], description="关联规则")
+    decision_basis: str = Field(default="", description="判断依据摘要")
+
+
+class JudgeDecisionInput(BaseModel):
+    """行为判断类违规判断节点的输入"""
+    user_query: str = Field(..., description="用户输入的查询问题")
+    full_context_paragraphs: List[str] = Field(default=[], description="拓宽的上下文")
+    related_rules: List[str] = Field(default=[], description="关联规则")
+    decision_basis: str = Field(default="", description="判断依据摘要")
+    behavior_subject: str = Field(default="", description="行为主体")
+    behavior_action: str = Field(default="", description="行为动作")
+    behavior_object: str = Field(default="", description="涉及对象")
+
+
+class JudgeDecisionOutput(BaseModel):
+    """行为判断类违规判断节点的输出"""
+    can_judge: bool = Field(..., description="是否能够判断")
+    is_violation: Optional[bool] = Field(default=None, description="是否违规（如果能判断）")
+    judgment_basis: str = Field(..., description="判断依据")
+    relevant_rules: List[str] = Field(default=[], description="相关规则引用")
+    # 🆕 预留扩展点：置信度和追问
+    confidence_score: float = Field(default=0.0, description="判断置信度（0-1）")
+    confidence_level: str = Field(default="medium", description="置信度等级：high/medium/low")
+    needs_clarification: bool = Field(default=False, description="是否需要追问")
+    clarification_questions: List[str] = Field(default=[], description="追问问题列表")
+    missing_information: List[str] = Field(default=[], description="缺失信息列表")
+    ambiguity_reasons: List[str] = Field(default=[], description="模糊原因列表")
+    suggested_actions: List[str] = Field(default=[], description="建议行动")
+    warning_notes: List[str] = Field(default=[], description="警告说明")
 
 
 # ==================== 混合类知识库检索节点 ====================
@@ -497,4 +602,60 @@ class ConsultRetrievalLoopNodeInput(BaseModel):
 class ConsultRetrievalLoopNodeOutput(BaseModel):
     """循环检索内部节点的输出"""
     loop_state: ConsultRetrievalLoopState = Field(..., description="更新后的循环状态")
+
+
+# ==================== 混合类并行节点 ====================
+class MixedSplitInput(BaseModel):
+    """混合类拆分节点的输入"""
+    user_query: str = Field(..., description="用户输入的查询问题")
+    query_complexity: str = Field(default="standard", description="查询复杂度")
+    behavior_analysis: Optional[dict] = Field(default=None, description="行为分析结果")
+    # 术语预处理节点输出字段
+    standard_terms: List[str] = Field(default=[], description="识别到的标准化术语列表")
+    expanded_terms: List[str] = Field(default=[], description="关联拓展后的术语列表")
+    action_elements: List[str] = Field(default=[], description="提取的行为要素")
+    object_elements: List[str] = Field(default=[], description="提取的对象要素")
+    extracted_keywords: List[str] = Field(default=[], description="提取的关键词")
+
+
+class MixedSplitOutput(BaseModel):
+    """混合类拆分节点的输出"""
+    # 咨询部分
+    consult_query: str = Field(default="", description="咨询部分查询语句")
+    consult_keywords: List[str] = Field(default=[], description="咨询部分关键词")
+    consult_focus: str = Field(default="", description="咨询焦点")
+    retrieval_strategy_consult: dict = Field(default={}, description="咨询部分检索策略")
+    # 判断部分
+    judge_query: str = Field(default="", description="判断部分查询语句")
+    judge_keywords: List[str] = Field(default=[], description="判断部分关键词")
+    behavior_subject: str = Field(default="", description="行为主体")
+    behavior_action: str = Field(default="", description="行为动作")
+    behavior_object: str = Field(default="", description="涉及对象")
+    retrieval_strategy_judge: dict = Field(default={}, description="判断部分检索策略")
+
+
+class MixedMergeInput(BaseModel):
+    """混合类整合节点的输入"""
+    user_query: str = Field(..., description="用户输入的查询问题")
+    intent_type: str = Field(default="混合类", description="意图类型")
+    # 咨询部分结果
+    consult_retrieval_results: List[dict] = Field(default=[], description="咨询部分检索结果")
+    # 判断部分结果
+    judge_retrieval_results: List[dict] = Field(default=[], description="判断部分检索结果")
+    can_judge: bool = Field(default=True, description="是否能够判断")
+    is_violation: Optional[bool] = Field(default=None, description="是否违规")
+    judgment_basis: str = Field(default="", description="判断依据")
+    confidence_score: float = Field(default=0.0, description="判断置信度")
+    confidence_level: str = Field(default="medium", description="置信度等级")
+
+
+class MixedMergeOutput(BaseModel):
+    """混合类整合节点的输出"""
+    retrieval_results: List[dict] = Field(default=[], description="整合后的检索结果")
+    can_judge: bool = Field(default=True, description="是否能够判断")
+    is_violation: Optional[bool] = Field(default=None, description="是否违规")
+    judgment_basis: str = Field(default="", description="判断依据")
+    confidence_score: float = Field(default=0.0, description="判断置信度")
+    confidence_level: str = Field(default="medium", description="置信度等级")
+
 

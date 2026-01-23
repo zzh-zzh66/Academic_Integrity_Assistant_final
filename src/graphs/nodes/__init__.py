@@ -39,7 +39,14 @@ from graphs.nodes.judge import (
     judge_process_node,
     judge_retrieval_node,
     judge_context_expand_node,
-    judge_rerank_node
+    judge_rerank_node,
+    judge_query_optimize_node
+)
+
+from graphs.nodes.judge_enhanced import (
+    judge_retrieval_enhanced_node,
+    judge_context_expand_enhanced_node,
+    judge_decision_node
 )
 
 # 混合类节点
@@ -48,6 +55,11 @@ from graphs.nodes.mixed import (
     mixed_retrieval_node,
     mixed_context_expand_node,
     mixed_rerank_node
+)
+
+from graphs.nodes.mixed_parallel import (
+    mixed_split_node,
+    mixed_merge_node
 )
 
 __all__ = [
@@ -79,9 +91,15 @@ __all__ = [
     "judge_retrieval_node",
     "judge_context_expand_node",
     "judge_rerank_node",
+    "judge_query_optimize_node",
+    "judge_retrieval_enhanced_node",
+    "judge_context_expand_enhanced_node",
+    "judge_decision_node",
     # 混合类节点
     "mixed_process_node",
     "mixed_retrieval_node",
     "mixed_context_expand_node",
     "mixed_rerank_node",
+    "mixed_split_node",
+    "mixed_merge_node",
 ]

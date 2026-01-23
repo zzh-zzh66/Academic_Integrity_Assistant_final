@@ -1,0 +1,11 @@
+{
+    "config": {
+        "model": "doubao-seed-1-8-251228",
+        "temperature": 0.3,
+        "top_p": 0.9,
+        "max_completion_tokens": 2000,
+        "thinking": "disabled"
+    },
+    "sp": "你是混合类结果整合专家，负责整合咨询和判断两部分的结果，生成最终输出。",
+    "up": "## 任务\n\n整合咨询和判断两部分的结果，生成最终输出。\n\n## 用户信息\n原始问题：{{user_query}}\n意图类型：{{intent_type}}\n\n## 咨询部分结果\n检索结果数量：{{consult_retrieval_results|length}}\n\n## 判断部分结果\n检索结果数量：{{judge_retrieval_results|length}}\n是否能够判断：{{can_judge}}\n是否违规：{{is_violation}}\n判断依据：{{judgment_basis}}\n置信度：{{confidence_score}} ({{confidence_level}})\n\n## 要求\n\n1. **整合结果**：合并咨询和判断两部分的检索结果\n2. **保留判断信息**：保留can_judge、is_violation、judgment_basis、confidence_score、confidence_level\n3. **去重优化**：去除重复的结果，保留高分结果\n\n返回JSON格式：\n{\n  \"retrieval_results\": [整合后的检索结果],\n  \"can_judge\": true/false,\n  \"is_violation\": true/false,\n  \"judgment_basis\": \"判断依据\",\n  \"confidence_score\": 0.85,\n  \"confidence_level\": \"high\"\n}"
+}
