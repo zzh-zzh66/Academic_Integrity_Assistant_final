@@ -287,7 +287,16 @@ def response_generation_node(
     desc: 根据意图类型和知识库检索结果，按照模板生成结构化响应
     integrations: 大语言模型
     """
+    from graphs.nodes.common import get_fallback_response
+    
     ctx = runtime.context
+    
+    # 检查是否为空检索结果（循环检索的兜底情况）
+    if not state.retrieval_results:
+        fallback_msg = get_fallback_response(state.intent_type)
+        return ResponseGenerationOutput(
+            formatted_response=fallback_msg
+        )
     
     # 读取配置文件
     cfg_file = os.path.join(os.getenv("COZE_WORKSPACE_PATH"), config['metadata']['llm_cfg'])
@@ -552,3 +561,83 @@ def _expand_related_terms(standard_terms: list, term_mapping: dict, max_depth: i
     _expand(standard_terms, 0)
     
     return list(expanded_terms)
+
+
+# ==================== 循环检索通用辅助函数 ====================
+
+def calculate_weighted_score(results: list) -> float:
+    """
+    计算加权总分 = Σ(分数 × 分数值)
+    
+    Args:
+        results: 检索结果列表，每个结果包含 score 字段
+        
+    Returns:
+        加权总分
+        
+    Example:
+        results = [
+            {"score": 0.9, "content": "..."},
+            {"score": 0.8, "content": "..."}
+        ]
+        weighted_score = 0.9 * 0.9 + 0.8 * 0.8 = 1.45
+    """
+    weighted_sum = 0.0
+    for result in results:
+        score = result.get("score", 0.0)
+        weighted_sum += (score * score)
+    
+    return weighted_sum
+
+
+def extract_top_k_chunks(results: list, k: int) -> list:
+    """
+    提取top-k高分内容的文本
+    
+    Args:
+        results: 检索结果列表，每个结果包含 score 和 content 字段
+        k: 提取的数量
+        
+    Returns:
+        top-k高分内容的文本列表
+        
+    Example:
+        results = [
+            {"score": 0.9, "content": "内容1"},
+            {"score": 0.8, "content": "内容2"},
+            {"score": 0.7, "content": "内容3"}
+        ]
+        k = 2
+        result = ["内容1", "内容2"]
+    """
+    if not results:
+        return []
+    
+    sorted_results = sorted(
+        results,
+        key=lambda x: x.get("score", 0.0),
+        reverse=True
+    )
+    
+    top_k = sorted_results[:k]
+    return [result.get("content", "") for result in top_k]
+
+
+def get_fallback_response(intent_type: str) -> str:
+    """
+    获取兜底回答
+    
+    Args:
+        intent_type: 意图类型（咨询类/行为判断类/混合类）
+        
+    Returns:
+        兜底回答消息
+    """
+    if intent_type == "咨询类":
+        return "抱歉，未能在知识库中找到足够相关的信息。建议您：\n1. 尝试使用更具体的关键词\n2. 简化问题描述\n3. 联系相关部门咨询"
+    elif intent_type == "行为判断类":
+        return "抱歉，基于当前信息无法准确判断该行为是否违规。建议您：\n1. 提供更详细的行为描述\n2. 咨询学校学术委员会\n3. 查阅相关学术规范文件"
+    elif intent_type == "混合类":
+        return "抱歉，未能在知识库中找到足够相关的信息。建议您：\n1. 分别咨询您想了解的具体问题\n2. 咨询相关部门或导师\n3. 查阅学术规范文件"
+    else:
+        return "抱歉，处理您的请求时遇到了问题。请稍后重试，或重新描述您的问题。"

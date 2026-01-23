@@ -1,4 +1,7 @@
 from langgraph.graph import StateGraph, END
+from langchain_core.runnables import RunnableConfig
+from langgraph.runtime import Runtime
+from coze_coding_utils.runtime_ctx.context import Context
 from graphs.state import (
     GlobalState,
     GraphInput,
@@ -8,13 +11,13 @@ from graphs.nodes import (
     intent_recognition_node,
     term_preprocessing_node,
     consult_process_node,
-    judge_process_node,
-    mixed_process_node,
     consult_retrieval_node,
-    judge_retrieval_node,
-    mixed_retrieval_node,
     consult_context_expand_node,
     consult_rerank_node,
+    judge_process_node,
+    mixed_process_node,
+    judge_retrieval_node,
+    mixed_retrieval_node,
     judge_context_expand_node,
     judge_rerank_node,
     mixed_context_expand_node,
@@ -49,24 +52,27 @@ builder.add_node("intent_recognition", intent_recognition_node,
 builder.add_node("term_preprocessing", term_preprocessing_node)
 builder.add_node("consult_process", consult_process_node,
                 metadata={"type": "agent", "llm_cfg": "config/consult_process_cfg.json"})
+
+# 咨询类检索节点（原有流程）
+builder.add_node("consult_retrieval", consult_retrieval_node)
+builder.add_node("consult_context_expand", consult_context_expand_node)
+builder.add_node("consult_rerank", consult_rerank_node,
+                metadata={"type": "agent", "llm_cfg": "config/consult_rerank_cfg.json"})
+
 builder.add_node("judge_process", judge_process_node,
                 metadata={"type": "agent", "llm_cfg": "config/judge_process_cfg.json"})
 builder.add_node("mixed_process", mixed_process_node,
                 metadata={"type": "agent", "llm_cfg": "config/mixed_process_cfg.json"})
 
-# 三个知识库检索节点（针对不同意图类型）
-builder.add_node("consult_retrieval", consult_retrieval_node)
+# 行为判断类和混合类的知识库检索节点（暂时保留，后续优化）
 builder.add_node("judge_retrieval", judge_retrieval_node)
 builder.add_node("mixed_retrieval", mixed_retrieval_node)
 
-# 三个上下文扩展节点
-builder.add_node("consult_context_expand", consult_context_expand_node)
+# 行为判断类和混合类的上下文扩展节点（暂时保留）
 builder.add_node("judge_context_expand", judge_context_expand_node)
 builder.add_node("mixed_context_expand", mixed_context_expand_node)
 
-# 三个重排序节点
-builder.add_node("consult_rerank", consult_rerank_node,
-                metadata={"type": "agent", "llm_cfg": "config/consult_rerank_cfg.json"})
+# 行为判断类和混合类的重排序节点（暂时保留）
 builder.add_node("judge_rerank", judge_rerank_node,
                 metadata={"type": "agent", "llm_cfg": "config/judge_rerank_cfg.json"})
 builder.add_node("mixed_rerank", mixed_rerank_node,
@@ -93,21 +99,25 @@ builder.add_conditional_edges(
 )
 
 # 三个处理分支分别路由到对应的检索节点
-builder.add_edge("consult_process", "consult_retrieval")
+builder.add_edge("consult_process", "consult_retrieval")  # 暂时使用原有流程
 builder.add_edge("judge_process", "judge_retrieval")
 builder.add_edge("mixed_process", "mixed_retrieval")
 
-# 检索节点 → 扩展节点
+# 咨询类检索节点 → 扩展节点
 builder.add_edge("consult_retrieval", "consult_context_expand")
+
+# 行为判断类和混合类的检索节点 → 扩展节点
 builder.add_edge("judge_retrieval", "judge_context_expand")
 builder.add_edge("mixed_retrieval", "mixed_context_expand")
 
-# 扩展节点 → 重排序节点
+# 咨询类扩展节点 → 重排序节点
 builder.add_edge("consult_context_expand", "consult_rerank")
+
+# 行为判断类和混合类的扩展节点 → 重排序节点
 builder.add_edge("judge_context_expand", "judge_rerank")
 builder.add_edge("mixed_context_expand", "mixed_rerank")
 
-# 三个重排序节点都汇聚到响应生成
+# 咨询类、行为判断类、混合类的重排序节点都汇聚到响应生成
 builder.add_edge("consult_rerank", "response_generation")
 builder.add_edge("judge_rerank", "response_generation")
 builder.add_edge("mixed_rerank", "response_generation")

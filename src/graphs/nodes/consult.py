@@ -15,9 +15,20 @@ from graphs.state import (
     ConsultContextExpandInput,
     ConsultContextExpandOutput,
     ConsultRerankInput,
-    ConsultRerankOutput
+    ConsultRerankOutput,
+    ConsultRetrievalLoopState,
+    ConsultRetrievalLoopStartInput,
+    ConsultRetrievalLoopStartOutput,
+    ConsultRetrievalLoopEndInput,
+    ConsultRetrievalLoopEndOutput
 )
-from graphs.nodes.common import extract_file_name_from_content, expand_content_around_chunk
+from graphs.nodes.common import (
+    extract_file_name_from_content,
+    expand_content_around_chunk,
+    calculate_weighted_score,
+    extract_top_k_chunks,
+    get_fallback_response
+)
 
 
 def consult_process_node(
@@ -314,3 +325,89 @@ def consult_rerank_node(
         return ConsultRerankOutput(
             retrieval_results=state.expanded_results[:5]
         )
+
+
+# ==================== 咨询类循环检索节点 ====================
+
+def consult_retrieval_loop_start_node(
+    state: ConsultRetrievalLoopStartInput,
+    config: RunnableConfig,
+    runtime: Runtime[Context]
+) -> ConsultRetrievalLoopStartOutput:
+    """
+    title: 咨询类循环检索入口
+    desc: 初始化循环检索状态，准备开始第一轮检索
+    integrations: 无
+    """
+    ctx = runtime.context
+    
+    # 初始化循环状态
+    loop_state = ConsultRetrievalLoopState(
+        user_query=state.user_query,
+        refined_query=state.refined_query,
+        refined_keywords=state.refined_keywords,
+        consult_focus=state.consult_focus,
+        max_rounds=2,  # 第一阶段固定2轮
+        target_score=0.8,
+        min_score_threshold=0.65,
+        current_round=0,
+        previous_score=0.0,
+        current_score=0.0,
+        retrieval_results=[],
+        high_score_chunks=[],
+        should_continue=True,
+        exit_reason="",
+        previous_retrieval_results=[]
+    )
+    
+    return ConsultRetrievalLoopStartOutput(
+        loop_state=loop_state
+    )
+
+
+def consult_retrieval_loop_end_node(
+    state: ConsultRetrievalLoopEndInput,
+    config: RunnableConfig,
+    runtime: Runtime[Context]
+) -> ConsultRetrievalLoopEndOutput:
+    """
+    title: 咨询类循环检索出口
+    desc: 根据循环检索的最终状态，返回最终结果或兜底回答
+    integrations: 无
+    """
+    ctx = runtime.context
+    
+    loop_state = state.loop_state
+    
+    # 判断是否需要兜底回答
+    is_fallback = False
+    fallback_message = ""
+    final_results = loop_state.retrieval_results
+    
+    # 如果退出原因是 fallback，使用兜底回答
+    if loop_state.exit_reason == "fallback":
+        is_fallback = True
+        fallback_message = get_fallback_response("咨询类")
+        final_results = []
+    
+    # 如果退出原因是 score_decreased，使用上一轮结果
+    elif loop_state.exit_reason == "score_decreased":
+        if loop_state.previous_retrieval_results:
+            final_results = loop_state.previous_retrieval_results
+        else:
+            # 如果没有上一轮结果，使用兜底回答
+            is_fallback = True
+            fallback_message = get_fallback_response("咨询类")
+            final_results = []
+    
+    # 其他情况（success、target_score_reached、max_rounds_reached），使用当前结果
+    else:
+        final_results = loop_state.retrieval_results
+        is_fallback = False
+        fallback_message = ""
+    
+    return ConsultRetrievalLoopEndOutput(
+        retrieval_results=final_results,
+        is_fallback=is_fallback,
+        fallback_message=fallback_message
+    )

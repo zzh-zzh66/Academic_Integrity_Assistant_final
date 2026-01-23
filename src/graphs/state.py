@@ -306,3 +306,53 @@ class MixedRerankOutput(BaseModel):
     """混合类重排序节点的输出"""
     retrieval_results: List[dict] = Field(..., description="重排序后的检索结果（top 5）")
 
+
+# ==================== 咨询类循环检索 ====================
+class ConsultRetrievalLoopState(BaseModel):
+    """咨询类循环检索状态"""
+    # 固定输入（每轮保持不变）
+    user_query: str = Field(..., description="用户原始问题")
+    refined_query: str = Field(..., description="优化后的查询语句")
+    refined_keywords: List[str] = Field(..., description="优化后的关键词列表")
+    consult_focus: str = Field(..., description="咨询焦点")
+
+    # 循环控制参数
+    max_rounds: int = Field(default=2, description="最大循环轮次")
+    target_score: float = Field(default=0.8, description="目标分数（达到即退出）")
+    min_score_threshold: float = Field(default=0.65, description="最低阈值（达到最大轮次后判断）")
+
+    # 循环状态（每轮更新）
+    current_round: int = Field(default=0, description="当前轮次")
+    previous_score: float = Field(default=0.0, description="上一轮分数")
+    current_score: float = Field(default=0.0, description="当前分数（加权求和）")
+    retrieval_results: List[dict] = Field(default=[], description="当前轮的检索结果")
+    high_score_chunks: List[str] = Field(default=[], description="top-3高分内容（用于下一轮上下文）")
+    should_continue: bool = Field(default=True, description="是否继续循环")
+    exit_reason: str = Field(default="", description="退出原因：success/target_score_reached/score_decreased/max_rounds_reached/fallback")
+    previous_retrieval_results: List[dict] = Field(default=[], description="上一轮的检索结果（用于分数下降时回退）")
+
+
+class ConsultRetrievalLoopStartInput(BaseModel):
+    """咨询类循环检索入口节点的输入"""
+    user_query: str = Field(..., description="用户原始问题")
+    refined_query: str = Field(..., description="优化后的查询语句")
+    refined_keywords: List[str] = Field(default=[], description="优化后的关键词列表")
+    consult_focus: str = Field(default="", description="咨询焦点")
+
+
+class ConsultRetrievalLoopStartOutput(BaseModel):
+    """咨询类循环检索入口节点的输出"""
+    loop_state: ConsultRetrievalLoopState = Field(..., description="初始化的循环状态")
+
+
+class ConsultRetrievalLoopEndInput(BaseModel):
+    """咨询类循环检索出口节点的输入"""
+    loop_state: ConsultRetrievalLoopState = Field(..., description="循环检索的最终状态")
+
+
+class ConsultRetrievalLoopEndOutput(BaseModel):
+    """咨询类循环检索出口节点的输出"""
+    retrieval_results: List[dict] = Field(default=[], description="最终检索结果")
+    is_fallback: bool = Field(default=False, description="是否使用兜底回答")
+    fallback_message: str = Field(default="", description="兜底回答消息（仅is_fallback=True时）")
+
