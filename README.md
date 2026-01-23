@@ -686,27 +686,13 @@ print(main_graph.invoke({'user_query': '请详细说明自我抄袭的定义，�
 
 ---
 
-## 🤝 贡献指南
-
 欢迎贡献代码、提出建议或报告问题！
-
-1. Fork 本仓库
-2. 创建特性分支 (`git checkout -b feature/AmazingFeature`)
-3. 提交更改 (`git commit -m 'feat: 添加某个功能'`)
-4. 推送到分支 (`git push origin feature/AmazingFeature`)
-5. 开启 Pull Request
-
----
-
-## 📄 许可证
-
-本项目采用 MIT 许可证 - 详见 [LICENSE](LICENSE) 文件
 
 ---
 
 ## 👨‍💻 开发者
 
-- **主要开发者**：zihuazhou02 (zihuazhou02@gmail.com)
+- **主要开发者**：zzh-zzh66 (zihuazhou02@gmail.com)
 - **开发平台**：[Coze Coding](https://www.coze.cn/) - 智能AI编程平台
   - 本项目基于 Coze Coding 平台开发，利用其强大的 LangGraph 工作流编排能力和 AI 辅助编码功能
   - 平台提供了一体化的开发环境，包括代码生成、调试、测试和部署等功能
@@ -716,17 +702,6 @@ print(main_graph.invoke({'user_query': '请详细说明自我抄袭的定义，�
 - 项目主页：[GitHub Repository](https://github.com/zzh-zzh66/Academic_Integrity_Assistant_final)
 - 开发者邮箱：zihuazhou02@gmail.com
 - 问题反馈：[Issues](https://github.com/zzh-zzh66/Academic_Integrity_Assistant_final/issues)
-
----
-
-## 🙏 致谢
-
-感谢以下开源项目和服务：
-
-- [Coze Coding](https://www.coze.cn/) - 智能AI编程平台，提供强大的工作流编排和AI辅助编码功能
-- [LangGraph](https://github.com/langchain-ai/langgraph) - 工作流框架
-- [豆包大模型](https://www.doubao.com/) - 大语言模型服务
-- [向量知识库](https://www.volcengine.com/product/ark) - 检索服务
 
 ---
 
