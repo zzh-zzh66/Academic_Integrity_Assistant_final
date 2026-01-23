@@ -13,12 +13,6 @@ from graphs.nodes import (
     consult_process_node,
     judge_process_node,
     mixed_process_node,
-    judge_retrieval_node,
-    mixed_retrieval_node,
-    judge_context_expand_node,
-    judge_rerank_node,
-    mixed_context_expand_node,
-    mixed_rerank_node,
     response_generation_node,
     complexity_node,
     consult_query_optimize_node,
@@ -62,9 +56,13 @@ builder.add_node("intent_recognition", intent_recognition_node,
 # 第三步：术语预处理
 builder.add_node("term_preprocessing", term_preprocessing_node)
 
-# 咨询类意图处理节点
+# 意图处理节点
 builder.add_node("consult_process", consult_process_node,
                 metadata={"type": "agent", "llm_cfg": "config/consult_process_cfg.json"})
+builder.add_node("judge_process", judge_process_node,
+                metadata={"type": "agent", "llm_cfg": "config/judge_process_cfg.json"})
+builder.add_node("mixed_process", mixed_process_node,
+                metadata={"type": "agent", "llm_cfg": "config/mixed_process_cfg.json"})
 
 # 咨询查询优化节点（在consult_process和consult_retrieval_loop之间）
 builder.add_node("consult_query_optimize", consult_query_optimize_node,
@@ -74,26 +72,7 @@ builder.add_node("consult_query_optimize", consult_query_optimize_node,
 builder.add_node("consult_retrieval_loop", consult_retrieval_loop_node,
                 metadata={"type": "looparray"})
 
-builder.add_node("judge_process", judge_process_node,
-                metadata={"type": "agent", "llm_cfg": "config/judge_process_cfg.json"})
-builder.add_node("mixed_process", mixed_process_node,
-                metadata={"type": "agent", "llm_cfg": "config/mixed_process_cfg.json"})
-
-# 行为判断类和混合类的知识库检索节点（暂时保留，后续优化）
-builder.add_node("judge_retrieval", judge_retrieval_node)
-builder.add_node("mixed_retrieval", mixed_retrieval_node)
-
-# 行为判断类和混合类的上下文扩展节点（暂时保留）
-builder.add_node("judge_context_expand", judge_context_expand_node)
-builder.add_node("mixed_context_expand", mixed_context_expand_node)
-
-# 行为判断类和混合类的重排序节点（暂时保留）
-builder.add_node("judge_rerank", judge_rerank_node,
-                metadata={"type": "agent", "llm_cfg": "config/judge_rerank_cfg.json"})
-builder.add_node("mixed_rerank", mixed_rerank_node,
-                metadata={"type": "agent", "llm_cfg": "config/mixed_rerank_cfg.json"})
-
-# 🆕 行为判断类增强节点（新增）
+# 🆕 行为判断类增强节点
 builder.add_node("judge_query_optimize", judge_query_optimize_node,
                 metadata={"type": "agent", "llm_cfg": "config/nodes/judge/judge_query_optimize_cfg.json"})
 builder.add_node("judge_retrieval_enhanced", judge_retrieval_enhanced_node)
@@ -101,6 +80,7 @@ builder.add_node("judge_context_expand_enhanced", judge_context_expand_enhanced_
 builder.add_node("judge_decision", judge_decision_node,
                 metadata={"type": "agent", "llm_cfg": "config/nodes/judge/judge_decision_cfg.json"})
 
+# 响应生成节点
 builder.add_node("response_generation", response_generation_node,
                 metadata={"type": "agent", "llm_cfg": "config/response_generation_cfg.json"})
 
@@ -122,7 +102,7 @@ builder.add_conditional_edges(
     }
 )
 
-# 三个处理分支分别路由到对应的检索节点
+# 三个处理分支分别路由到对应的处理节点
 builder.add_edge("consult_process", "consult_query_optimize")  # 咨询类：先优化查询，再循环检索
 builder.add_edge("consult_query_optimize", "consult_retrieval_loop")  # 优化后进入循环检索
 
@@ -132,16 +112,12 @@ builder.add_edge("judge_query_optimize", "judge_retrieval_enhanced")  # 增强�
 builder.add_edge("judge_retrieval_enhanced", "judge_context_expand_enhanced")  # 拓宽上下文
 builder.add_edge("judge_context_expand_enhanced", "judge_decision")  # 违规判断
 
-builder.add_edge("mixed_process", "mixed_retrieval")
+# 🚫 混合类分支：暂时跳过，直接到响应生成（待后续实现并行架构）
+builder.add_edge("mixed_process", "response_generation")
 
-# 行为判断类和混合类的检索节点 → 扩展节点
-builder.add_edge("judge_retrieval", "judge_context_expand")
-builder.add_edge("mixed_retrieval", "mixed_context_expand")
-
-# 咨询类、行为判断类、混合类的检索结果都汇聚到响应生成
+# 咨询类、行为判断类的检索结果都汇聚到响应生成
 builder.add_edge("consult_retrieval_loop", "response_generation")
-builder.add_edge("judge_decision", "response_generation")  # 🆕 行为判断类：判断结果 → 响应生成
-builder.add_edge("mixed_rerank", "response_generation")
+builder.add_edge("judge_decision", "response_generation")  # 行为判断类：判断结果 → 响应生成
 
 # 响应生成 → END
 builder.add_edge("response_generation", END)
