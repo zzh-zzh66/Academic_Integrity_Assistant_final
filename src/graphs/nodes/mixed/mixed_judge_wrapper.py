@@ -50,18 +50,29 @@ def mixed_judge_query_optimize_wrapper(
     )
 
 
+class MixedJudgeRetrievalEnhancedOutput(BaseModel):
+    """混合类行为判断增强检索包装节点的输出"""
+    judge_retrieval_results: List[dict] = Field(default=[], description="判断部分检索结果（混合类使用）")
+
 def mixed_judge_retrieval_enhanced_wrapper(
     state: JudgeRetrievalEnhancedInput,
     config: RunnableConfig,
     runtime: Runtime[Context]
-) -> JudgeRetrievalEnhancedOutput:
+) -> MixedJudgeRetrievalEnhancedOutput:
     """
     title: 混合类行为判断增强检索包装
     desc: 封装行为判断增强检索节点，用于混合类分支
     integrations: 知识库, 大语言模型（重排序）
     """
     from graphs.nodes.judge import judge_retrieval_enhanced_node
-    return judge_retrieval_enhanced_node(state, config, runtime)
+    
+    # 调用原始节点
+    result = judge_retrieval_enhanced_node(state, config, runtime)
+    
+    # 返回新的 Output，使用 judge_retrieval_results 字段
+    return MixedJudgeRetrievalEnhancedOutput(
+        judge_retrieval_results=result.retrieval_results
+    )
 
 
 def mixed_judge_context_expand_enhanced_wrapper(

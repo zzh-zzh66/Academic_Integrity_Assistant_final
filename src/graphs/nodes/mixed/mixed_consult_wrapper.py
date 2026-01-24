@@ -46,15 +46,26 @@ def mixed_consult_query_optimize_wrapper(
     )
 
 
+class MixedConsultRetrievalLoopOutput(BaseModel):
+    """混合类咨询循环检索包装节点的输出"""
+    consult_retrieval_results: List[dict] = Field(default=[], description="咨询部分检索结果（混合类使用）")
+
 def mixed_consult_retrieval_loop_wrapper(
     state: ConsultRetrievalInput,
     config: RunnableConfig,
     runtime: Runtime[Context]
-) -> ConsultRetrievalOutput:
+) -> MixedConsultRetrievalLoopOutput:
     """
     title: 混合类咨询循环检索包装
     desc: 封装咨询循环检索节点，用于混合类分支
     integrations: 知识库, 大语言模型
     """
     from graphs.nodes.consult_loop import consult_retrieval_loop_node
-    return consult_retrieval_loop_node(state, config, runtime)
+    
+    # 调用原始节点
+    result = consult_retrieval_loop_node(state, config, runtime)
+    
+    # 返回新的 Output，使用 consult_retrieval_results 字段
+    return MixedConsultRetrievalLoopOutput(
+        consult_retrieval_results=result.retrieval_results
+    )
