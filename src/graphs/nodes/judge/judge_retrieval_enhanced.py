@@ -1,6 +1,8 @@
 import os
 import json
 import logging
+import math
+from typing import List, Dict, Set, Tuple
 from jinja2 import Template
 from langchain_core.runnables import RunnableConfig
 from langgraph.runtime import Runtime
@@ -23,6 +25,186 @@ from graphs.nodes.common import (
     calculate_weighted_score,
     extract_top_k_chunks
 )
+
+
+# ==================== 去重和重排序工具函数 ====================
+
+def calculate_jaccard_similarity(text1: str, text2: str) -> float:
+    """
+    计算两个文本的Jaccard相似度
+    
+    Args:
+        text1: 文本1
+        text2: 文本2
+    
+    Returns:
+        Jaccard相似度（0-1之间）
+    """
+    # 将文本分词（按空格和标点符号）
+    set1 = set(text1.split())
+    set2 = set(text2.split())
+    
+    # 计算交集和并集
+    intersection = set1 & set2
+    union = set1 | set2
+    
+    # 避免除以0
+    if len(union) == 0:
+        return 0.0
+    
+    return len(intersection) / len(union)
+
+
+def greedy_clustering(
+    results: List[Dict],
+    similarity_threshold: float = 0.70
+) -> List[List[Dict]]:
+    """
+    贪心聚类算法，基于Jaccard相似度对检索结果进行聚类
+    
+    Args:
+        results: 检索结果列表，每个元素包含content、score、doc_id等字段
+        similarity_threshold: 相似度阈值，高于此值归为同一类
+    
+    Returns:
+        聚类列表，每个元素是一个聚类（包含多个结果）
+    """
+    if not results:
+        return []
+    
+    # 按分数降序排序
+    sorted_results = sorted(results, key=lambda x: x["score"], reverse=True)
+    
+    clusters = []
+    for result in sorted_results:
+        assigned = False
+        for cluster in clusters:
+            # 检查是否与聚类中的任一结果相似
+            for cluster_result in cluster:
+                similarity = calculate_jaccard_similarity(
+                    result["content"],
+                    cluster_result["content"]
+                )
+                if similarity >= similarity_threshold:
+                    cluster.append(result)
+                    assigned = True
+                    break
+            if assigned:
+                break
+        
+        if not assigned:
+            # 创建新聚类
+            clusters.append([result])
+    
+    logger.info(f"聚类完成: 共{len(clusters)}个聚类")
+    return clusters
+
+
+def select_representative_chunks(
+    clusters: List[List[Dict]]
+) -> List[Dict]:
+    """
+    从每个聚类中选择代表性片段（策略A：保留最高分片段）
+    
+    Args:
+        clusters: 聚类列表
+    
+    Returns:
+        代表性片段列表
+    """
+    representatives = []
+    
+    for cluster in clusters:
+        # 策略A：每个聚类只保留最高分片段
+        representative = max(cluster, key=lambda x: x["score"])
+        representatives.append(representative)
+    
+    logger.info(f"选择代表片段: 从{len(clusters)}个聚类中选择了{len(representatives)}个代表片段")
+    return representatives
+
+
+def mmr_rerank(
+    results: List[Dict],
+    lambda_param: float = 0.88,
+    top_k: int = 12
+) -> List[Dict]:
+    """
+    MMR（Maximal Marginal Relevance）重排序算法
+    平衡相关性和多样性
+    
+    Args:
+        results: 检索结果列表，每个元素包含content、score等字段
+        lambda_param: 相关性权重（0-1之间），越高越重视相关性
+        top_k: 返回的top-k结果数量
+    
+    Returns:
+        重排序后的结果列表
+    """
+    if not results:
+        return []
+    
+    # 标准化分数到0-1之间
+    scores = [r["score"] for r in results]
+    max_score = max(scores)
+    min_score = min(scores)
+    
+    if max_score - min_score == 0:
+        normalized_scores = [1.0 for _ in scores]
+    else:
+        normalized_scores = [
+            (score - min_score) / (max_score - min_score)
+            for score in scores
+        ]
+    
+    # 为结果添加标准化分数
+    results_with_normalized = [
+        {**r, "normalized_score": ns}
+        for r, ns in zip(results, normalized_scores)
+    ]
+    
+    selected = []
+    remaining = results_with_normalized.copy()
+    
+    # 选择第一个结果（相关性最高的）
+    first_result = max(remaining, key=lambda x: x["normalized_score"])
+    selected.append(first_result)
+    remaining.remove(first_result)
+    
+    # 选择剩余的top_k-1个结果
+    while len(selected) < top_k and remaining:
+        best_idx = -1
+        best_score = -1
+        
+        for idx, candidate in enumerate(remaining):
+            # 计算MMR分数
+            # MMR = lambda * Rel - (1-lambda) * MaxSim
+            relevance = candidate["normalized_score"]
+            
+            # 计算与已选结果的最大相似度
+            max_sim = 0.0
+            for s in selected:
+                sim = calculate_jaccard_similarity(
+                    candidate["content"],
+                    s["content"]
+                )
+                if sim > max_sim:
+                    max_sim = sim
+            
+            # MMR分数
+            mmr_score = lambda_param * relevance - (1 - lambda_param) * max_sim
+            
+            if mmr_score > best_score:
+                best_score = mmr_score
+                best_idx = idx
+        
+        if best_idx >= 0:
+            selected.append(remaining[best_idx])
+            remaining.pop(best_idx)
+        else:
+            break
+    
+    logger.info(f"MMR重排序完成: 从{len(results)}个结果中选择了{len(selected)}个（lambda={lambda_param}）")
+    return selected
 
 def judge_retrieval_enhanced_node(
     state: JudgeRetrievalEnhancedInput,
@@ -118,19 +300,28 @@ def judge_retrieval_enhanced_node(
         
         logger.info(f"第2轮检索结果: {len(second_round_results)}个片段")
         
-        # 合并两轮结果，去重（按doc_id）
-        all_results_dict = {}
+        # 合并两轮结果（不去重，保留所有片段用于聚类）
+        all_results = []
         for result in first_round_results + second_round_results:
-            doc_id = result["doc_id"]
-            if doc_id not in all_results_dict:
-                all_results_dict[doc_id] = result
-            else:
-                # 保留分数更高的结果
-                if result["score"] > all_results_dict[doc_id]["score"]:
-                    all_results_dict[doc_id] = result
+            all_results.append(result)
         
-        # 按分数排序，取top-10
-        ranked_results = sorted(all_results_dict.values(), key=lambda x: x["score"], reverse=True)[:10]
+        logger.info(f"合并后总结果: {len(all_results)}个片段")
+        
+        # 步骤1: 贪心聚类（Jaccard, threshold=0.70）
+        logger.info("开始贪心聚类...")
+        clusters = greedy_clustering(all_results, similarity_threshold=0.70)
+        
+        # 步骤2: 每个聚类保留最高分片段（策略A）
+        logger.info("选择代表片段...")
+        representative_chunks = select_representative_chunks(clusters)
+        
+        # 步骤3: MMR重排序（lambda=0.88, top_k=12）
+        logger.info("执行MMR重排序...")
+        ranked_results = mmr_rerank(
+            representative_chunks,
+            lambda_param=0.88,
+            top_k=12
+        )
         
         logger.info(f"=== 最终结果 ===")
         logger.info(f"结果数量: {len(ranked_results)}")
