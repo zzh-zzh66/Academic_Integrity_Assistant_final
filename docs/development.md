@@ -585,6 +585,89 @@ __all__ = ["new_node"]
 }
 ```
 
+### 修改行为判断类去重策略
+
+行为判断类分支采用多级去重策略，相关参数直接在节点实现中定义。
+
+#### 修改聚类去重参数
+
+编辑 `src/graphs/nodes/judge/judge_retrieval_enhanced.py`：
+
+```python
+# 在judge_retrieval_enhanced_node函数中修改
+clusters = greedy_clustering(all_results, similarity_threshold=0.70)  # 修改阈值
+```
+
+**参数说明**：
+- `similarity_threshold`：Jaccard相似度阈值（0.65-0.75）
+- 越高：聚类越少，去重越严格
+- 越低：聚类越多，保留越多内容
+
+#### 修改MMR重排序参数
+
+编辑 `src/graphs/nodes/judge/judge_retrieval_enhanced.py`：
+
+```python
+# 在judge_retrieval_enhanced_node函数中修改
+ranked_results = mmr_rerank(
+    representative_chunks,
+    lambda_param=0.88,  # 相关性权重
+    top_k=12            # 返回结果数量
+)
+```
+
+**参数说明**：
+- `lambda_param`：相关性权重（0.85-0.90）
+  - 越高：越重视相关性，减少多样性
+  - 越低：越重视多样性，增加不同观点
+- `top_k`：返回结果数量（10-15）
+  - 越多：保留更多信息，但可能包含噪音
+  - 越少：提高精度，但可能遗漏重要信息
+
+#### 修改段落去重参数
+
+编辑 `src/graphs/nodes/judge/judge_context_expand_enhanced.py`：
+
+```python
+# 在judge_context_expand_enhanced_node函数中修改
+deduplicated_paragraphs = deduplicate_paragraphs_by_doc(
+    expanded_paragraphs,
+    similarity_threshold=0.75  # 修改阈值
+)
+```
+
+**参数说明**：
+- `similarity_threshold`：Jaccard相似度阈值（0.70-0.80）
+- 越高：去重越宽松，保留更多相似段落
+- 越低：去重越严格，只保留高分不重复段落
+
+#### 去重策略调优建议
+
+| 场景 | 聚类threshold | MMR lambda | MMR top_k | 段落threshold |
+|------|---------------|------------|-----------|---------------|
+| 追求精度（行为判断） | 0.70 | 0.90 | 10 | 0.75 |
+| 平衡模式（默认配置） | 0.70 | 0.88 | 12 | 0.75 |
+| 追求多样性（咨询类） | 0.65 | 0.85 | 15 | 0.70 |
+
+**调优步骤**：
+1. 确定应用场景（精度优先 vs 多样性优先）
+2. 根据上表调整参数
+3. 测试验证效果
+4. 记录最佳配置
+
+**测试验证**：
+```python
+from graphs.graph import main_graph
+
+# 测试行为判断类查询
+result = main_graph.invoke({
+    "user_query": "论文中引用他人的观点但未注明出处，算不算抄袭？"
+})
+
+# 检查输出质量和准确性
+print(result["formatted_response"])
+```
+
 ### 测试验证
 
 ```python
@@ -599,6 +682,12 @@ print(result["formatted_response"])
 # 测试复杂查询
 result = main_graph.invoke({
     "user_query": "请详细说明自我抄袭的定义"
+})
+print(result["formatted_response"])
+
+# 测试行为判断类查询
+result = main_graph.invoke({
+    "user_query": "论文中引用他人的观点但未注明出处，算不算抄袭？"
 })
 print(result["formatted_response"])
 ```

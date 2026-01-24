@@ -317,6 +317,133 @@ config/
 - `temperature: 0.5`：中等温度，保持专业性的同时有一定的灵活性
 - `max_completion_tokens: 3000`：较长输出，支持详细的答案
 
+### 7. 行为判断类查询优化配置
+
+**文件**：`config/nodes/judge/judge_query_optimize_cfg.json`
+
+```json
+{
+  "config": {
+    "model": "doubao-seed-1-8-251228",
+    "temperature": 0.3,
+    "top_p": 0.7,
+    "max_completion_tokens": 800,
+    "timeout": 600,
+    "thinking": "disabled"
+  },
+  "sp": "你是一个学术行为分析专家，专门优化学术行为判断的检索查询。\n\n请从用户问题中提取行为要素（主体、动作、对象），并构建增强的检索查询。\n\n行为要素说明：\n- 主体：执行行为的人或机构\n- 动作：具体的行为描述\n- 对象：行为所涉及的事物\n\n检索策略：行为判断类需要高精度匹配，因此采用2轮增强检索策略，确保检索到相关的规范条款。",
+  "up": "请优化以下查询并提取行为要素：\n\n用户问题：{{user_query}}\n优化查询：{{refined_query}}\n关键词：{{refined_keywords}}\n\n请返回JSON格式：\n{\n  \"optimized_query\": \"优化后的查询\",\n  \"behavior_subject\": \"行为主体\",\n  \"behavior_action\": \"行为动作\",\n  \"behavior_object\": \"行为对象\",\n  \"optimized_keywords\": [\"关键词列表\"],\n  \"retrieval_strategy\": {\n    \"top_k_first_round\": 20,\n    \"min_score_first_round\": 0.3,\n    \"top_k_second_round\": 15,\n    \"min_score_second_round\": 0.5\n  }\n}"
+}
+```
+
+### 8. 行为判断类违规判断配置
+
+**文件**：`config/nodes/judge/judge_decision_cfg.json`
+
+```json
+{
+  "config": {
+    "model": "doubao-seed-1-8-251228",
+    "temperature": 0.1,
+    "top_p": 0.9,
+    "max_completion_tokens": 2000,
+    "timeout": 600,
+    "thinking": "disabled"
+  },
+  "sp": "你是学术规范判断专家，负责基于拓宽的上下文判断用户行为是否违规。输入的上下文已经过聚类去重和MMR重排序优化，确保了质量和多样性。在判断时，你需要评估判断的置信度，并在信息不足时识别需要追问的内容。注意：输出时要智能聚合相似规则，避免重复表述；从不同文档和角度提取判断依据，提升判断的全面性和准确性。",
+  "up": "## 任务\n\n基于以下信息判断用户行为是否违规（输入已优化，避免重复内容）：\n\n## 用户问题\n{{user_query}}\n\n## 拓宽的上下文（完整段落，已去重和优化）\n{% for paragraph in full_context_paragraphs %}\n- {{paragraph}}\n{% endfor %}\n\n## 关联规则\n{% for rule in related_rules %}\n- {{rule}}\n{% endfor %}\n\n## 判断依据\n{{decision_basis}}\n\n## 行为要素\n{% if behavior_subject %}主体：{{behavior_subject}}{% endif %}\n{% if behavior_action %}动作：{{behavior_action}}{% endif %}\n{% if behavior_object %}对象：{{behavior_object}}{% endif %}\n\n## 要求\n\n1. **判断是否违规**：基于规则和上下文，判断行为是否违规\n2. **智能聚合规则**：不要简单罗列相似规则，要将内容相近的规则合并表述，避免重复\n3. **多样化判断依据**：从不同文档、不同角度提取判断依据，确保判断的全面性\n4. **评估置信度**：评估判断的置信度（0-1），判断等级（high/medium/low）\n   - high（≥0.8）：信息充分，规则明确，判断可靠\n   - medium（0.6-0.8）：信息较充分，规则较明确，判断较可靠\n   - low（<0.6）：信息不足或规则模糊，判断不可靠\n5. **识别追问需求**：如果置信度较低或信息不足，列出需要追问的问题\n6. **列出缺失信息**：如果无法判断，列出缺失的关键信息\n\n返回JSON格式：\n{\n  \"can_judge\": true/false,\n  \"is_violation\": true/false,\n  \"judgment_basis\": \"判断依据说明（合并相似规则，从多角度阐述）\",\n  \"relevant_rules\": [\"规则1\", \"规则2\"],\n  \"confidence_score\": 0.85,\n  \"confidence_level\": \"high\",\n  \"needs_clarification\": false,\n  \"clarification_questions\": [],\n  \"missing_information\": [],\n  \"ambiguity_reasons\": [],\n  \"suggested_actions\": [],\n  \"warning_notes\": []\n}"
+}
+```
+
+**配置要点**：
+- `temperature: 0.1`：低温度，确保判断的确定性
+- 系统提示词强调智能聚合和多样化依据提取
+- 明确置信度等级的划分标准
+- 支持追问和缺失信息识别
+
+---
+
+## 去重优化配置说明
+
+行为判断类分支采用多级去重策略，确保检索结果的质量和多样性。相关配置已集成在节点实现中，无需额外配置文件。
+
+### 去重策略参数
+
+#### 1. 贪心聚类参数
+
+**位置**：`judge_retrieval_enhanced_node`
+
+**参数**：
+```python
+similarity_threshold = 0.70  # Jaccard相似度阈值
+```
+
+**说明**：
+- 相似度 ≥ 0.70 的片段归为同一聚类
+- 按分数降序排序，贪心分配到现有聚类或创建新聚类
+
+#### 2. MMR重排序参数
+
+**位置**：`judge_retrieval_enhanced_node`
+
+**参数**：
+```python
+lambda_param = 0.88  # 相关性权重
+top_k = 12  # 返回的top-k结果数量
+```
+
+**说明**：
+- `lambda_param = 0.88`：偏重相关性（0-1之间，越高越重视相关性）
+- `top_k = 12`：从聚类代表片段中选择12个结果
+- MMR公式：`MMR = lambda * Rel - (1-lambda) * MaxSim`
+
+#### 3. 段落级别去重参数
+
+**位置**：`judge_context_expand_enhanced_node`
+
+**参数**：
+```python
+similarity_threshold = 0.75  # Jaccard相似度阈值
+```
+
+**说明**：
+- 相似度 ≥ 0.75 的段落视为重复
+- 按doc_id分组，文档内部去重，文档之间不跨文档去重
+- 保留高分段落，确保文档来源多样性
+
+### 参数调优建议
+
+| 参数 | 当前值 | 建议范围 | 效果 |
+|------|--------|----------|------|
+| 聚类threshold | 0.70 | 0.65-0.75 | 降低阈值增加聚类数量，提高阈值减少聚类 |
+| MMR lambda | 0.88 | 0.85-0.90 | 提高lambda增加相关性，降低lambda增加多样性 |
+| MMR top_k | 12 | 10-15 | 增加top_k保留更多结果，减少top_k提高精度 |
+| 段落去重threshold | 0.75 | 0.70-0.80 | 降低阈值增加去重力度，提高阈值减少去重 |
+
+**调优建议**：
+- 如果检索结果重复严重：降低聚类threshold和段落去重threshold
+- 如果检索结果多样性不足：降低MMR lambda
+- 如果检索结果精度不足：提高MMR lambda，减少MMR top_k
+
+```json
+{
+  "config": {
+    "model": "doubao-seed-1-8-251228",
+    "temperature": 0.5,
+    "top_p": 0.7,
+    "max_completion_tokens": 3000,
+    "timeout": 600,
+    "thinking": "disabled"
+  },
+  "sp": "你是一个学术诚信顾问，专门回答学术道德、学术规范、学术不端行为等相关问题。\n\n请基于提供的知识库检索结果，生成专业、准确、可信的答案。\n\n回答要求：\n1. 采用自然对话风格，去除系统内部信息\n2. 每个观点标注信息来源\n3. 提供可验证的参考文献或来源\n4. 遵循学术严谨性，不编造内容\n5. 如果信息不足，明确说明并建议进一步查询",
+  "up": "请基于以下检索结果回答用户问题：\n\n用户问题：{{user_query}}\n意图类型：{{intent_type}}\n\n检索结果：\n{% for result in retrieval_results %}\n{{ loop.index }}. {{ result.content }}\n（来源：{{ result.source }}）\n{% endfor %}\n\n请生成自然对话风格的答案，标注信息来源。"
+}
+```
+
+**配置要点**：
+- `temperature: 0.5`：中等温度，保持专业性的同时有一定的灵活性
+- `max_completion_tokens: 3000`：较长输出，支持详细的答案
+
 ---
 
 ## 配置文件最佳实践

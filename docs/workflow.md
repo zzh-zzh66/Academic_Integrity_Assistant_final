@@ -168,7 +168,7 @@ graph TD
 
 ## 行为判断类分支
 
-行为判断类分支用于判断特定行为是否符合学术规范：
+行为判断类分支用于判断特定行为是否符合学术规范，采用增强检索和去重优化策略：
 
 ```mermaid
 graph TD
@@ -176,86 +176,164 @@ graph TD
     Intent --> Term[term_preprocessing_node<br/>术语预处理]
     Term --> JudgeProcess[judge_process_node<br/>行为判断类处理]
     
-    JudgeProcess -->|enhanced_query<br/>behavior_elements| JudgeRetrieval[judge_retrieval_node<br/>知识库检索]
+    JudgeProcess -->|optimized_query<br/>behavior_elements| JudgeQueryOpt[judge_query_optimize_node<br/>查询优化]
+    JudgeQueryOpt --> JudgeRetrieval[judge_retrieval_enhanced_node<br/>增强检索+去重]
     
-    JudgeRetrieval --> JudgeExpand[judge_context_expand_node<br/>上下文扩展]
-    JudgeExpand --> JudgeRerank[judge_rerank_node<br/>重排序]
+    JudgeRetrieval -->|retrieval_results| JudgeExpand[judge_context_expand_enhanced_node<br/>拓宽上下文+段落去重]
+    JudgeExpand --> JudgeDecision[judge_decision_node<br/>违规判断]
     
-    JudgeRerank --> Confidence[confidence_evaluation_node<br/>置信度评估]
-    
-    Confidence --> Response[response_generation_node<br/>响应生成]
+    JudgeDecision --> Response[response_generation_node<br/>响应生成]
     
     Response --> Output[格式化响应]
     
     style JudgeRetrieval fill:#e1f5ff
     style JudgeExpand fill:#fff4e1
-    style JudgeRerank fill:#f3e5f5
-    style Confidence fill:#fce4ec
+    style JudgeDecision fill:#fce4ec
     style Response fill:#e8f5e9
 ```
 
 ### 关键节点说明
 
-#### 1. judge_process_node（行为判断处理）
-
-**输入**：
-- `refined_query`：优化后的查询
-- `refined_keywords`：提取的关键词
-- `behavior_elements`：提取的行为要素（行为类型、对象、条件）
-
-**输出**：
-- `enhanced_query`：增强的查询
-- `behavior_elements`：结构化的行为要素
-
-**作用**：提取行为要素，构建增强检索查询
-
-#### 2. judge_retrieval_node（知识库检索）
+#### 1. judge_query_optimize_node（查询优化）
 
 **输入**：
 - `user_query`：用户原始查询
-- `enhanced_query`：增强的查询
-- `behavior_elements`：行为要素
+- `refined_query`：优化后的查询
+- `refined_keywords`：提取的关键词
 
 **输出**：
-- `retrieval_results`：检索结果片段
+- `optimized_query`：最终优化的查询
+- `behavior_subject`：行为主体
+- `behavior_action`：行为动作
+- `behavior_object`：行为对象
+- `optimized_keywords`：优化的关键词
 
-**作用**：检索相关知识库内容（15-25个片段）
+**作用**：提取行为要素，构建增强检索查询
 
-#### 3. judge_context_expand_node（上下文扩展）
+#### 2. judge_retrieval_enhanced_node（增强检索+去重）
 
 **输入**：
-- `retrieval_results`：检索结果片段
+- `user_query`：用户原始查询
+- `optimized_query`：优化后的查询
+- `retrieval_strategy`：检索策略（由查询优化节点设置）
 
 **输出**：
-- `expanded_context`：扩展后的上下文（3-10个完整段落）
+- `retrieval_results`：经过去重和重排序的检索结果（top-12）
 
-**作用**：将检索片段扩展为完整段落，拓宽上下文
+**作用**：执行2轮循环检索，通过聚类去重和MMR重排序获取高质量结果
 
-#### 4. judge_rerank_node（重排序）
+**处理流程**：
+```
+知识库检索（20条）
+  → 贪心聚类（Jaccard, threshold=0.70）
+  → 每个聚类保留最高分片段（策略A）
+  → MMR重排序（lambda=0.88, top_k=12）
+  → 输出最终结果
+```
+
+**去重优化策略**：
+
+1. **贪心聚类算法**
+   - 使用Jaccard相似度计算片段间相似度（threshold=0.70）
+   - 按分数降序排序，贪心分配到现有聚类或创建新聚类
+   - 目的：识别并分组高度相似的内容
+
+2. **代表片段选择（策略A）**
+   - 每个聚类只保留最高分片段
+   - 确保每个代表都是高质量
+   - 避免引入低相关性内容
+
+3. **MMR重排序**
+   - 平衡相关性和多样性（lambda=0.88，偏重相关性）
+   - 从代表片段中选择top-12个结果
+   - 确保输出的多样性和质量
+
+**检索策略示例**：
+
+```python
+# 行为判断类检索策略
+{
+  "top_k_first_round": 20,      # 第1轮检索20条
+  "min_score_first_round": 0.3, # 第1轮最低分数
+  "top_k_second_round": 15,     # 第2轮检索15条
+  "min_score_second_round": 0.5 # 第2轮最低分数
+}
+```
+
+#### 3. judge_context_expand_enhanced_node（拓宽上下文+段落去重）
 
 **输入**：
-- `expanded_context`：扩展的上下文
-- `user_query`：用户查询
-- `behavior_elements`：行为要素
+- `retrieval_results`：经过去重和重排序的检索结果（top-12）
 
 **输出**：
-- `ranked_results`：排序后的结果
-- `relevance_scores`：相关性分数
+- `full_context_paragraphs`：拓宽后的完整段落（已去重）
+- `related_rules`：关联的规则引用
+- `decision_basis`：判断依据说明
 
-**作用**：基于相关性、权威性、完整性进行重排序
+**作用**：将检索片段扩展为完整段落，并进行段落级别去重
 
-#### 5. confidence_evaluation_node（置信度评估）
+**处理流程**：
+```
+扩展内容到完整段落（300-500字）
+  → 按doc_id分组
+  → 每个文档内部进行Jaccard去重（threshold=0.75）
+  → 保留最高分段落
+  → 输出去重后的完整段落
+```
+
+**段落去重策略**：
+
+1. **按doc_id分组**
+   - 将所有段落按文档ID分组
+   - 保证不同文档之间不跨文档去重
+   - 避免单一文档内容过度主导
+
+2. **文档内部去重**
+   - 使用Jaccard相似度计算段落间相似度（threshold=0.75）
+   - 按分数降序排序，贪心保留高分的非重复段落
+   - 确保文档来源多样性
+
+3. **拓宽上下文**
+   - 每个片段扩展到300-500字的完整段落
+   - 理解规则全貌，提供更完整的判断依据
+
+#### 4. judge_decision_node（违规判断）
 
 **输入**：
-- `ranked_results`：排序后的结果
-- `behavior_elements`：行为要素
+- `user_query`：用户原始查询
+- `full_context_paragraphs`：拓宽后的完整段落（已去重）
+- `related_rules`：关联的规则引用
+- `decision_basis`：判断依据说明
+- `behavior_subject`：行为主体
+- `behavior_action`：行为动作
+- `behavior_object`：行为对象
 
 **输出**：
+- `can_judge`：是否能够判断
+- `is_violation`：是否违规（true/false/null）
+- `judgment_basis`：判断依据说明（智能聚合相似规则）
+- `relevant_rules`：相关规则引用
 - `confidence_score`：置信度分数（0-1）
-- `judgment_result`：判断结果（合规/不合规/不确定）
-- `supporting_evidence`：支持证据
+- `confidence_level`：置信度等级（high/medium/low）
+- `needs_clarification`：是否需要澄清
+- `clarification_questions`：需要澄清的问题列表
+- `missing_information`：缺失的信息列表
+- `ambiguity_reasons`：模糊的原因
+- `suggested_actions`：建议的行动
+- `warning_notes`：警告说明
 
-**作用**：评估判断结果的置信度，提供证据支持
+**作用**：基于拓宽的上下文判断是否违规，评估置信度
+
+**判断特点**：
+- 智能聚合相似规则，避免重复表述
+- 从不同文档和角度提取判断依据
+- 评估判断的置信度，识别需要追问的内容
+- 提供结构化的判断结果和证据支持
+
+**置信度等级**：
+- **High（≥0.8）**：信息充分，规则明确，判断可靠
+- **Medium（0.6-0.8）**：信息较充分，规则较明确，判断较可靠
+- **Low（<0.6）**：信息不足或规则模糊，判断不可靠
 
 ---
 
