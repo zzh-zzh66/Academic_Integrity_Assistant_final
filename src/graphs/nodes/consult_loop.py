@@ -11,7 +11,8 @@ from coze_coding_utils.runtime_ctx.context import Context
 from graphs.state import (
     ConsultRetrievalInput,
     ConsultRetrievalOutput,
-    ConsultRetrievalLoopState
+    ConsultRetrievalLoopState,
+    ConsultResultsConsolidationInput
 )
 
 # 配置日志
@@ -194,7 +195,21 @@ def consult_retrieval_loop_node(
     logger.info(f"最终返回结果数: {len(final_results)}")
     logger.info("=" * 80)
     
+    # 提取历史和当前结果（用于整合节点）
+    history_results = subgraph_result_dict.get("previous_retrieval_results", [])
+    current_results = subgraph_result_dict.get("retrieval_results", [])
+    
+    # 如果退出原因是 score_decreased，交换历史和当前
+    if exit_reason == "score_decreased":
+        history_results = subgraph_result_dict.get("retrieval_results", [])
+        current_results = subgraph_result_dict.get("previous_retrieval_results", [])
+    
+    logger.info(f"历史结果数: {len(history_results)}")
+    logger.info(f"当前结果数: {len(current_results)}")
+    
     # 4. 将子图输出转换回父图状态
     return ConsultRetrievalOutput(
-        retrieval_results=final_results
+        retrieval_results=final_results,
+        history_results=history_results,
+        current_results=current_results
     )

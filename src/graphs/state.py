@@ -66,6 +66,12 @@ class GlobalState(BaseModel):
 
     # 后续节点输出字段
     retrieval_results: List[dict] = Field(default=[], description="知识库检索结果")
+    
+    # 咨询类循环检索结果字段（新增）
+    history_results: List[dict] = Field(default=[], description="历史检索结果（第0轮，用于咨询类整合）")
+    current_results: List[dict] = Field(default=[], description="当前检索结果（第1轮，用于咨询类整合）")
+    unified_results: List[dict] = Field(default=[], description="统一的结果列表（咨询类整合后的输出）")
+    
     formatted_response: str = Field(default="", description="格式化后的响应内容")
 
 
@@ -123,6 +129,8 @@ class ConsultRetrievalInput(BaseModel):
 class ConsultRetrievalOutput(BaseModel):
     """咨询类知识库检索节点的输出"""
     retrieval_results: List[dict] = Field(default=[], description="知识库检索结果（咨询类）")
+    history_results: List[dict] = Field(default=[], description="历史检索结果（第0轮）")
+    current_results: List[dict] = Field(default=[], description="当前检索结果（第1轮）")
 
 
 # ==================== 行为判断类知识库检索节点 ====================
@@ -510,8 +518,29 @@ class ConsultRetrievalLoopEndInput(BaseModel):
 class ConsultRetrievalLoopEndOutput(BaseModel):
     """咨询类循环检索出口节点的输出"""
     retrieval_results: List[dict] = Field(default=[], description="最终检索结果")
+    history_results: List[dict] = Field(default=[], description="历史检索结果（第0轮）")
+    current_results: List[dict] = Field(default=[], description="当前检索结果（第1轮）")
     is_fallback: bool = Field(default=False, description="是否使用兜底回答")
     fallback_message: str = Field(default="", description="兜底回答消息（仅is_fallback=True时）")
+
+
+# ==================== 咨询类结果整合节点 ====================
+class ConsultResultsConsolidationInput(BaseModel):
+    """咨询类结果整合节点的输入"""
+    history_results: List[dict] = Field(default=[], description="历史检索结果（第0轮）")
+    current_results: List[dict] = Field(default=[], description="当前检索结果（第1轮）")
+    user_query: str = Field(..., description="用户原始问题")
+
+
+class ConsultResultsConsolidationOutput(BaseModel):
+    """咨询类结果整合节点的输出"""
+    unified_results: List[dict] = Field(default=[], description="统一的结果列表（合并去重后）")
+    total_count: int = Field(default=0, description="总片段数")
+    avg_score: float = Field(default=0.0, description="平均分数")
+    max_score: float = Field(default=0.0, description="最高分数")
+    top_3_contents: List[str] = Field(default=[], description="top-3高分内容")
+    summary: str = Field(default="", description="简要总结")
+    retrieval_results: List[dict] = Field(default=[], description="知识库检索结果（供response_generation使用）")
 
 
 # ==================== 查询复杂度判断节点 ====================

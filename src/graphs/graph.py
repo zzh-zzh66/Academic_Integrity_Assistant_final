@@ -34,6 +34,7 @@ from graphs.nodes.mixed.mixed_judge_wrapper import (
     mixed_judge_decision_wrapper
 )
 from graphs.nodes.consult_loop import consult_retrieval_loop_node
+from graphs.nodes.consult.consult_results_consolidation import consult_results_consolidation_node
 
 
 def route_intent_type(state: GlobalState) -> str:
@@ -83,6 +84,9 @@ builder.add_node("consult_query_optimize", consult_query_optimize_node,
 # 咨询类循环检索节点（通过调用子图实现）
 builder.add_node("consult_retrieval_loop", consult_retrieval_loop_node,
                 metadata={"type": "looparray"})
+
+# 咨询类结果整合节点（新增：整合多轮检索结果）
+builder.add_node("consult_results_consolidation", consult_results_consolidation_node)
 
 # 🆕 行为判断类增强节点
 builder.add_node("judge_query_optimize", judge_query_optimize_node,
@@ -158,7 +162,8 @@ builder.add_edge("mixed_judge_decision", "mixed_merge")  # 行为判断分支完
 builder.add_edge("mixed_merge", "response_generation")  # 整合结果 → 响应生成
 
 # 咨询类、行为判断类的检索结果都汇聚到响应生成
-builder.add_edge("consult_retrieval_loop", "response_generation")
+builder.add_edge("consult_retrieval_loop", "consult_results_consolidation")  # 咨询类：循环检索 → 结果整合
+builder.add_edge("consult_results_consolidation", "response_generation")  # 咨询类：结果整合 → 响应生成
 builder.add_edge("judge_decision", "response_generation")  # 行为判断类：判断结果 → 响应生成
 
 # 响应生成 → END

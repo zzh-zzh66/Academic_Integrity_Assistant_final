@@ -24,6 +24,7 @@ from graphs.state import (
 )
 from graphs.nodes.common import extract_file_name_from_content
 from graphs.loop_config_loader import config_loader
+from graphs.nodes.consult.consult_dedup import intra_round_deduplication
 
 # 配置日志
 logger = logging.getLogger("consult_retrieval")
@@ -152,6 +153,19 @@ def consult_retrieval_internal_node(
                 logger.info(f"  Result[{idx}]: score={result['score']:.4f}, file={result['file_name']}")
         else:
             logger.warning(f"没有检索到任何结果！所有结果都被min_score={min_score}过滤掉了")
+        
+        # === 轮内去重 ===
+        if retrieval_results:
+            logger.info(f"=== 应用轮内去重 ===")
+            # 参数：threshold=0.70, mmr_lambda=0.85, mmr_top_k=10
+            deduped_results = intra_round_deduplication(
+                retrieval_results,
+                similarity_threshold=0.70,
+                mmr_lambda=0.85,
+                mmr_top_k=10
+            )
+            logger.info(f"轮内去重完成: {len(retrieval_results)} -> {len(deduped_results)}")
+            retrieval_results = deduped_results
         
         # 更新状态
         updated_state = state.model_copy(deep=True)
